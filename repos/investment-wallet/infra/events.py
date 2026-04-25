@@ -1,0 +1,6 @@
+RK_TOP_UP_PAID = "wallet.top_up.paid"
+RK_FUND_TRANSFER_PAID = "wallet.fund_transfer.paid"
+EXCHANGE = "iron_wallet"
+CONSUMER_QUEUE = "wallet.settlements"
+CONSUMER_BINDING = "omnibus.settlement.*"
+DLQ_NAME = "wallet.settlements.dlq"
