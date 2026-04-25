@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "cockroachdb+asyncpg://root@localhost:26257/{db}?sslmode=disable",
+    "cockroachdb+asyncpg://root@localhost:26257/{db}",
 )
 
 _engine = None

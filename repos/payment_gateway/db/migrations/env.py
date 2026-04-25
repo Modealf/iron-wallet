@@ -17,7 +17,7 @@ if config.config_file_name:
 DB_NAME = os.getenv("ALEMBIC_DB_NAME", "payment_gateway")
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    f"cockroachdb+asyncpg://root@localhost:26257/{DB_NAME}?sslmode=disable",
+    f"cockroachdb+asyncpg://root@localhost:26257/{DB_NAME}",
 )
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
