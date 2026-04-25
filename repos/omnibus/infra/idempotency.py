@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,7 +37,8 @@ def hash_body(body: dict) -> str:
 async def start(session: AsyncSession, key: str, body: dict) -> IdempotentStart:
     """Attempt to claim a key. Must run inside the business txn."""
     rh = hash_body(body)
-    expires = datetime.now(timezone.utc) + IDEMPOTENCY_TTL
+    now = datetime.now(timezone.utc)
+    expires = now + IDEMPOTENCY_TTL
 
     stmt = (
         insert(IdempotencyKey)
@@ -46,12 +47,27 @@ async def start(session: AsyncSession, key: str, body: dict) -> IdempotentStart:
         .returning(IdempotencyKey.key)
     )
     result = await session.execute(stmt)
-    inserted = result.scalar_one_or_none()
-    if inserted is not None:
+    if result.scalar_one_or_none() is not None:
         return IdempotentStart(new=True, cached_status=None, cached_body=None, resource_id=None)
 
     existing = await session.scalar(select(IdempotencyKey).where(IdempotencyKey.key == key))
     assert existing is not None
+
+    if existing.expires_at <= now:
+        # Stale row — treat as if it didn't exist. Delete and retry the claim.
+        await session.execute(
+            delete(IdempotencyKey).where(
+                IdempotencyKey.key == key,
+                IdempotencyKey.expires_at <= now,
+            )
+        )
+        result = await session.execute(stmt)
+        if result.scalar_one_or_none() is not None:
+            return IdempotentStart(new=True, cached_status=None, cached_body=None, resource_id=None)
+        # Lost the race with another concurrent retry; fall through to read the new row.
+        existing = await session.scalar(select(IdempotencyKey).where(IdempotencyKey.key == key))
+        assert existing is not None
+
     if existing.request_hash != rh:
         raise IdempotencyConflict()
     if existing.state == "in_progress":
