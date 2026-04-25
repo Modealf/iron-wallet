@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1180">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="9" refX="9" refY="4.5" orient="auto"><polygon points="0 0, 10 4.5, 0 9" fill="#5a5a5a"/></marker>
+  </defs>
+  <rect x="0" y="0" width="1500" height="1180" fill="#f8f6f3"/>
+  <text x="750.0" y="46" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#1a1a1a">Top-Up — Architecture &amp; Flow</text>
+  <text x="750.0" y="72" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="13" fill="#5a5a5a">services own their tables; numbered arrows trace one top-up request through the system</text>
+  <rect x="50" y="150" width="120" height="70" rx="12" ry="12" fill="#ffffff" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="110.0" y="177.0" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#1a1a1a">Client</text>
+  <text x="110.0" y="197.0" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" fill="#5a5a5a">mobile / web app</text>
+  <rect x="230" y="130" width="140" height="110" rx="12" ry="12" fill="#ffffff" stroke="#4a4a4a" stroke-width="2"/>
+  <path d="M 230 142 a 12 12 0 0 1 12 -12 h 116 a 12 12 0 0 1 12 12 v 30 h -140 z" fill="#ffffff" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="300.0" y="157" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#1a1a1a">Gateway</text>
+  <text x="244" y="190" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#5a5a5a">FORWARDS</text>
+  <text x="248" y="204" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">POST /top-ups</text>
+  <text x="248" y="220" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">POST /bank-transfers</text>
+  <rect x="430" y="110" width="270" height="220" rx="12" ry="12" fill="#ffffff" stroke="#4a4a4a" stroke-width="2"/>
+  <path d="M 430 122 a 12 12 0 0 1 12 -12 h 246 a 12 12 0 0 1 12 12 v 30 h -270 z" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="565.0" y="137" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#1a1a1a">Investment-Wallet</text>
+  <text x="444" y="170" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#5a5a5a">ENDPOINT</text>
+  <text x="448" y="184" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">POST /top-ups</text>
+  <text x="444" y="208" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#5a5a5a">TABLES</text>
+  <text x="448" y="222" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">wallets, top_ups, fund_transfers</text>
+  <text x="448" y="238" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">idempotency_keys, processed_events</text>
+  <text x="448" y="254" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">outbox_events</text>
+  <text x="444" y="278" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#5a5a5a">EVENTS</text>
+  <text x="448" y="292" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">↓ consume settlement.completed</text>
+  <text x="448" y="308" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">↑ publish top_up.paid</text>
+  <rect x="760" y="130" width="240" height="180" rx="12" ry="12" fill="#ffffff" stroke="#4a4a4a" stroke-width="2"/>
+  <path d="M 760 142 a 12 12 0 0 1 12 -12 h 216 a 12 12 0 0 1 12 12 v 30 h -240 z" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="880.0" y="157" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#1a1a1a">Payment-Gateway</text>
+  <text x="774" y="190" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#5a5a5a">ENDPOINT</text>
+  <text x="778" y="204" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">POST /charges</text>
+  <text x="774" y="228" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#5a5a5a">TABLES</text>
+  <text x="778" y="242" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">charges, idempotency_keys</text>
+  <text x="774" y="266" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#5a5a5a">CALLS</text>
+  <text x="778" y="280" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">external provider (Moyasar)</text>
+  <rect x="1060" y="150" width="170" height="130" rx="12" ry="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="1145.0" y="207.0" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#1a1a1a">Provider (mock)</text>
+  <text x="1145.0" y="227.0" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" fill="#5a5a5a">Moyasar</text>
+  <text x="1145.0" y="241.0" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" fill="#5a5a5a">returns payment_id</text>
+  <text x="1145.0" y="255.0" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" fill="#5a5a5a">fires signed webhook</text>
+  <rect x="850" y="600" width="290" height="220" rx="12" ry="12" fill="#ffffff" stroke="#4a4a4a" stroke-width="2"/>
+  <path d="M 850 612 a 12 12 0 0 1 12 -12 h 266 a 12 12 0 0 1 12 12 v 30 h -290 z" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="995.0" y="627" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#1a1a1a">Omnibus</text>
+  <text x="864" y="660" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#5a5a5a">ENDPOINTS</text>
+  <text x="868" y="674" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">POST /webhooks/moyasar</text>
+  <text x="868" y="690" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">POST /bank-transfers</text>
+  <text x="864" y="714" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#5a5a5a">TABLES</text>
+  <text x="868" y="728" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" font-weight="700" fill="#1a1a1a">statements</text>
+  <text x="944" y="728" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-style="italic" fill="#b08400">★ source of truth</text>
+  <text x="868" y="744" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">processed_webhooks, outbox_events</text>
+  <text x="868" y="760" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">idempotency_keys</text>
+  <text x="864" y="784" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#5a5a5a">EVENTS</text>
+  <text x="868" y="798" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">↑ publish settlement.completed</text>
+  <rect x="460" y="640" width="240" height="130" rx="12" ry="12" fill="#ffffff" stroke="#4a4a4a" stroke-width="2"/>
+  <path d="M 460 652 a 12 12 0 0 1 12 -12 h 216 a 12 12 0 0 1 12 12 v 30 h -240 z" fill="#e9d8c4" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="580.0" y="667" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#1a1a1a">RabbitMQ</text>
+  <text x="474" y="700" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#5a5a5a">TOPIC EXCHANGE</text>
+  <text x="478" y="714" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">iron_wallet</text>
+  <text x="474" y="738" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#5a5a5a">QUEUES</text>
+  <text x="478" y="752" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">wallet.settlements</text>
+  <text x="478" y="768" font-family="'SF Mono', 'Menlo', 'Consolas', monospace" font-size="11.5" fill="#1a1a1a">wallet.settlements.dlq</text>
+  <line x1="170" y1="185" x2="228" y2="185" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <circle cx="195" cy="163" r="13" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="195" y="167" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#ffffff">1</text>
+  <line x1="370" y1="185" x2="428" y2="185" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <circle cx="400" cy="163" r="13" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="400" y="167" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#ffffff">2</text>
+  <line x1="700" y1="220" x2="758" y2="220" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <circle cx="728" cy="198" r="13" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="728" y="202" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#ffffff">3</text>
+  <line x1="1000" y1="215" x2="1058" y2="215" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <circle cx="1030" cy="193" r="13" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="1030" y="197" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#ffffff">4</text>
+  <path d="M 1145.0 280 C 1145.0 430 1067.5 448 1067.5 598" stroke="#5a5a5a" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arr)"/>
+  <circle cx="1175" cy="460" r="13" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="1175" y="464" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#ffffff">5</text>
+  <line x1="848" y1="700" x2="702" y2="700" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <circle cx="775.0" cy="678" r="13" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="775.0" y="682" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#ffffff">6</text>
+  <path d="M 580.0 638 C 580.0 488 565.0 482 565.0 332" stroke="#5a5a5a" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arr)"/>
+  <circle cx="490" cy="460" r="13" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="490" y="464" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#ffffff">7</text>
+  <text x="50" y="880" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#1a1a1a">Flow steps</text>
+  <circle cx="60" cy="902" r="11" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="60" y="905" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">1</text>
+  <text x="80" y="906" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">Client POSTs /top-ups with Idempotency-Key. Gateway just forwards.</text>
+  <circle cx="60" cy="924" r="11" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="60" y="927" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">2</text>
+  <text x="80" y="928" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">Wallet claims the idempotency key and inserts a top_up row (status PENDING) — both in one DB transaction.</text>
+  <circle cx="60" cy="946" r="11" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="60" y="949" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">3</text>
+  <text x="80" y="950" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">Wallet calls Payment-Gateway. PG claims its own idem key (derived from top_up_id), inserts a charge row (status CREATED).</text>
+  <circle cx="60" cy="968" r="11" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="60" y="971" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">4</text>
+  <text x="80" y="972" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">PG forwards to the external provider (Moyasar mocked).</text>
+  <circle cx="60" cy="990" r="11" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="60" y="993" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">5</text>
+  <text x="80" y="994" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">Provider returns payment_id immediately; schedules a signed webhook to fire later. PG marks charge ACCEPTED and returns to Wallet, which transitions top_up PENDING→PROCESSING and 200s the client.</text>
+  <circle cx="60" cy="1012" r="11" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="60" y="1015" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">6</text>
+  <text x="80" y="1016" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">Async: provider's signed webhook arrives at Omnibus. Omnibus verifies HMAC, dedups by event_id, inserts a statement and an outbox_event in one txn.</text>
+  <circle cx="60" cy="1034" r="11" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="60" y="1037" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">7</text>
+  <text x="80" y="1038" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">Omnibus's outbox publisher drains the row to RabbitMQ as settlement.completed.</text>
+  <circle cx="60" cy="1056" r="11" fill="#1a1a1a" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="60" y="1059" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#ffffff">8</text>
+  <text x="80" y="1060" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">Wallet consumer reads the event, dedups by event_id, transitions top_up PROCESSING→PAID, credits the wallet balance, and writes its own outbox event top_up.paid.</text>
+  <text x="1100" y="880" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#1a1a1a">Arrow style</text>
+  <line x1="1100" y1="902" x2="1150" y2="902" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="1160" y="906" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">synchronous HTTP call</text>
+  <line x1="1100" y1="924" x2="1150" y2="924" stroke="#5a5a5a" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arr)"/>
+  <text x="1160" y="928" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="12" fill="#1a1a1a">asynchronous (webhook / event)</text>
+</svg>
