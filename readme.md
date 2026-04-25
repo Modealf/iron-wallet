@@ -109,7 +109,7 @@ When all containers are healthy, run the smoke scripts in another terminal:
     ./examples/top-up.sh
     ./examples/fund-transfer.sh
 
-Tear down: `make demo-down`.
+Tear down: `make down` (tears down both the demo stack and any infra started by `make up`).
 
 Use the manual flow below ("Running the POC") if you want each service's logs in its own terminal.
 

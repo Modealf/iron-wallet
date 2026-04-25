@@ -8,26 +8,24 @@ YELLOW = '\033[33m'
 
 help:
 	@echo -e $(YELLOW) "make up:" $(NOCOLOR)
-	@echo "     To run dependencies and start the project"
-	@echo -e $(YELLOW) "make githooks_enable:" $(NOCOLOR)
-	@echo "     to tear down the project"
+	@echo "     Start infra only (Cockroach, RabbitMQ, Redis). Use with the manual 4-terminal flow."
 	@echo -e $(YELLOW) "make demo:" $(NOCOLOR)
-	@echo "     Run the full stack (Cockroach + RabbitMQ + 4 services) via docker compose"
-	@echo -e $(YELLOW) "make demo-down:" $(NOCOLOR)
-	@echo "     Tear down the dockerized demo stack"
+	@echo "     Run the full stack (infra + 4 services) via docker compose. Single-command demo."
+	@echo -e $(YELLOW) "make down:" $(NOCOLOR)
+	@echo "     Tear everything down (both 'up' and 'demo' stacks)."
+	@echo -e $(YELLOW) "make install:" $(NOCOLOR)
+	@echo "     Install Python deps for all 4 services (manual flow only — demo handles its own)."
 
 
 up:
 	./dev_setup/up.sh
 
-down:
-	./dev_setup/down.sh
-
 demo:
 	docker compose up --build
 
-demo-down:
-	docker compose down -v
+down:
+	-docker compose down -v --remove-orphans
+	-./dev_setup/down.sh
 
 
 install: 
