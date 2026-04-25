@@ -1,7 +1,9 @@
-import hmac
 import hashlib
+import hmac
+import json
 import os
 import uuid
+
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,7 +37,6 @@ async def moyasar_webhook(
     if not _verify(raw, x_signature):
         raise HTTPException(status_code=401, detail="bad signature")
 
-    import json
     payload = json.loads(raw)
     correlation = payload.get("metadata", {}).get("top_up_id")
     try:

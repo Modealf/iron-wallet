@@ -1,4 +1,5 @@
 import uuid
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert
 
@@ -56,7 +57,10 @@ class BankTransferDuplicate(Exception):
     pass
 
 
-async def record_bank_transfer(session, *, body) -> uuid.UUID:
+async def record_bank_transfer(session: AsyncSession, *, body) -> uuid.UUID:
+    # POC simplification: the bank transfer notification carries `wallet_id` so we can
+    # correlate directly. In production, omnibus would resolve the virtual IBAN to a
+    # wallet via the wallet service; we skip that lookup here.
     statement_id = uuid.uuid4()
     session.add(Statement(
         id=statement_id, kind="fund_transfer",
@@ -66,8 +70,9 @@ async def record_bank_transfer(session, *, body) -> uuid.UUID:
     ))
     try:
         await session.flush()
-    except Exception as e:
-        if "statements_kind_source_ref_unique" in str(e):
+    except IntegrityError as e:
+        # Postgres/CockroachDB unique violation = same bank_reference seen before.
+        if getattr(e.orig, "sqlstate", None) == "23505":
             raise BankTransferDuplicate() from e
         raise
     await outbox.enqueue(

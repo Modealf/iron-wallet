@@ -15,7 +15,7 @@ class ChargeService:
     provider: PaymentProviderPort
 
     async def create(self, req: CreateChargeRequest, idempotency_key: str) -> ChargeResponse:
-        idem = await idempotency.start(self.session, idempotency_key, req.model_dump())
+        idem = await idempotency.start(self.session, idempotency_key, req.model_dump(mode="json"))
         if not idem.new and idem.cached_body is not None:
             return ChargeResponse(**idem.cached_body)
 
