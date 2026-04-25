@@ -30,6 +30,18 @@ A correlation_id flows through the system manually for debugging, but there are 
 
 For higher throughput, `outbox_events` would be partitioned by `aggregate_id` so independent publishers can drain disjoint shards in parallel without contention. Similarly, the wallet settlements queue could be consumed by multiple workers with message-key-based routing so that events for the same wallet land on the same consumer (preserving per-wallet ordering) while different wallets fan out. The POC runs a single consumer per service, which is fine until traffic reaches a few hundred events per second.
 
+## Retry-on-serialization-failure middleware for the idempotency claim
+
+Two concurrent requests with the same `Idempotency-Key` hit `INSERT ... ON CONFLICT DO NOTHING` simultaneously. CockroachDB serializes the writes; the loser receives a `40001` (serialization failure) instead of the spec-mandated 409. A small FastAPI middleware that re-runs the request handler on `serialization_failure` would let the second attempt see the now-committed row and replay it as an idempotent hit. Data correctness is unaffected today (no double top-up, no double charge); only the HTTP status of the loser is wrong in this rare race.
+
+## Stronger typing for status fields
+
+`top_up.status`, `charge.status`, and `idempotency_keys.state` are stored as plain strings with `CheckConstraint` at the table level. Application code uses raw string literals everywhere. Migrating these to `Enum` (or `typing.Literal`) plus a `TypeAdapter` for serialization would catch typos at edit time and make state-machine transitions self-documenting. Skipped here because the constraint already prevents bad values at write time, and the lift across four services adds churn for a POC.
+
+## Singleton AsyncClient + connection pool tuning
+
+The Gateway and the Wallet's HTTP client both create a fresh `httpx.AsyncClient` per request, paying TCP/TLS setup cost on every forwarded call. A module-level singleton with explicit `limits` (max connections, keepalive) would meaningfully reduce p99 latency at any real load. The same applies to the SQLAlchemy engines, which currently use defaults (`pool_size=5`, no timeout) — fine for one user clicking a button, not fine for a real test.
+
 ## Chaos tests (kill consumer mid-process, network partitions)
 
 The integration tests cover happy paths and a handful of failure modes (duplicate webhook, duplicate idempotency key, provider rejection), but they do not exercise the system under deliberate disruption — killing the consumer between dedup write and state transition, partitioning the broker mid-ack, dropping packets between wallet and payment gateway. The state machine + outbox + processed-events triad is designed to survive these, but proving it requires a chaos harness (Toxiproxy, Pumba, or similar) that was out of scope.
