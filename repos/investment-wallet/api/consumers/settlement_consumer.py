@@ -1,4 +1,5 @@
 import json
+import logging
 import uuid
 
 import aio_pika
@@ -12,6 +13,12 @@ from resources.top_ups.top_up_model import TopUp
 from resources.wallets.wallet_model import Wallet
 from resources.fund_transfers.fund_transfer_model import FundTransfer
 from resources.processed_events.model import ProcessedEvent
+
+logger = logging.getLogger(__name__)
+
+
+class UnroutableSettlement(RuntimeError):
+    """Event references a correlation/wallet that doesn't exist locally — send to DLQ, don't requeue."""
 
 
 async def handle_settlement(sm: async_sessionmaker, envelope: dict) -> None:
@@ -33,9 +40,8 @@ async def handle_settlement(sm: async_sessionmaker, envelope: dict) -> None:
             correlation = uuid.UUID(payload["correlation_id"])
             top_up = await session.scalar(select(TopUp).where(TopUp.id == correlation))
             if top_up is None:
-                # Orphan — rollback dedup so DLQ sees it, raise.
                 await session.rollback()
-                raise RuntimeError(f"unknown top_up {correlation}")
+                raise UnroutableSettlement(f"unknown top_up {correlation}")
             await guarded_transition(session, TopUp, top_up.id, expected="PROCESSING", new="PAID")
             wallet = await session.scalar(select(Wallet).where(Wallet.id == top_up.wallet_id))
             assert wallet is not None
@@ -55,7 +61,7 @@ async def handle_settlement(sm: async_sessionmaker, envelope: dict) -> None:
             wallet = await session.scalar(select(Wallet).where(Wallet.id == wallet_id))
             if wallet is None:
                 await session.rollback()
-                raise RuntimeError(f"unknown wallet {wallet_id}")
+                raise UnroutableSettlement(f"unknown wallet {wallet_id}")
             ft = FundTransfer(
                 id=uuid.uuid4(),
                 wallet_id=wallet.id,
@@ -78,7 +84,7 @@ async def handle_settlement(sm: async_sessionmaker, envelope: dict) -> None:
             )
         else:
             await session.rollback()
-            raise RuntimeError(f"unknown kind {payload['kind']}")
+            raise UnroutableSettlement(f"unknown kind {payload['kind']}")
         await session.commit()
 
 
@@ -94,10 +100,14 @@ async def run_consumer(
     channel = await conn.channel()
     await channel.set_qos(prefetch_count=10)
     dlq = await channel.declare_queue(dlq_name, durable=True)
+    # Quorum queue is required for x-delivery-limit to take effect. Classic
+    # queues silently ignore it, which means failing messages would requeue
+    # forever instead of moving to the DLQ.
     queue = await channel.declare_queue(
         queue_name,
         durable=True,
         arguments={
+            "x-queue-type": "quorum",
             "x-dead-letter-exchange": "",
             "x-dead-letter-routing-key": dlq.name,
             "x-delivery-limit": 5,
@@ -110,14 +120,20 @@ async def run_consumer(
 
     async with queue.iterator() as it:
         async for message in it:
-            async with message.process(requeue=True, reject_on_redelivered=False):
+            try:
                 envelope = json.loads(message.body)
-                try:
-                    await handle_settlement(sm, envelope)
-                except IllegalStateTransition:
-                    # State mismatch — nack with requeue to retry later.
-                    raise
-                except RuntimeError:
-                    # Unknown correlation — reject, let DLQ capture it.
-                    await message.reject(requeue=False)
-                    return
+                await handle_settlement(sm, envelope)
+            except IllegalStateTransition:
+                # Out-of-order: top_up not yet in PROCESSING. Requeue and let
+                # the broker redeliver; x-delivery-limit caps the retries.
+                await message.nack(requeue=True)
+            except UnroutableSettlement as exc:
+                # Orphan event with no matching local entity — straight to DLQ.
+                logger.warning("unroutable settlement, sending to DLQ: %s", exc)
+                await message.reject(requeue=False)
+            except Exception:
+                # Unexpected failure: requeue once, x-delivery-limit handles repeat offenders.
+                logger.exception("unexpected settlement processing error")
+                await message.nack(requeue=True)
+            else:
+                await message.ack()
