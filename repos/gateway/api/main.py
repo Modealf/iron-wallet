@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from uvicorn import run
 from api.routes import init_routes
@@ -13,9 +15,11 @@ app: FastAPI = init_routes(
 
 if __name__ == "__main__":
 
+    RELOAD = os.getenv("UVICORN_RELOAD", "true").lower() == "true"
+
     run(
         "api.main:app",
         host="0.0.0.0",
         port=8081,
-        reload=True,
+        reload=RELOAD,
     )

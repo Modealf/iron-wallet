@@ -1,4 +1,5 @@
 import asyncio
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -38,4 +39,5 @@ app: FastAPI = init_routes(FastAPI(title="IronWallet Omnibus", lifespan=lifespan
 if __name__ == "__main__":
     alembic_cfg = Config("alembic.ini")
     command.upgrade(alembic_cfg, "head")
-    run("api.main:app", host="0.0.0.0", port=8084, reload=False)
+    RELOAD = os.getenv("UVICORN_RELOAD", "true").lower() == "true"
+    run("api.main:app", host="0.0.0.0", port=8084, reload=RELOAD)
