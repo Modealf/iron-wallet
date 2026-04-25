@@ -6,10 +6,10 @@ Investment wallet POC supporting **Top-Up** (wallet funding via payment provider
 
 | Service | Port | DB | Role |
 |---|---|---|---|
-| Gateway | 8084 | — | Thin edge: auth (stubbed), routing, forwards idempotency key. No business logic, no state. |
+| Gateway | 8081 | — | Thin edge: auth (stubbed), routing, forwards idempotency key. No business logic, no state. |
 | Investment-Wallet | 8083 | `investment_wallet` | Owns wallets and top-up/fund-transfer records. Orchestrates top-up. Consumes settlement events. Publishes state-change events. |
-| Payment-Gateway | 8081 | `payment_gateway` | Wraps external payment provider (Moyasar, mocked). Owns `charges` table. |
-| Omnibus | 8082 | `omnibus` | Ingests provider webhooks and bank-transfer notifications. Owns statements. Publishes settlement events. |
+| Payment-Gateway | 8082 | `payment_gateway` | Wraps external payment provider (Moyasar, mocked). Owns `charges` table. |
+| Omnibus | 8084 | `omnibus` | Ingests provider webhooks and bank-transfer notifications. Owns statements. Publishes settlement events. |
 
 **Ownership rule:** each service only reads and writes its own DB. Cross-service data moves over HTTP (commands) or RabbitMQ (events).
 
@@ -21,10 +21,10 @@ flowchart LR
 
     subgraph IronWallet [" "]
         direction LR
-        GW[Gateway<br/>:8084]
+        GW[Gateway<br/>:8081]
         IW[Investment-Wallet<br/>:8083]
-        PG[Payment-Gateway<br/>:8081]
-        OM[Omnibus<br/>:8082]
+        PG[Payment-Gateway<br/>:8082]
+        OM[Omnibus<br/>:8084]
     end
 
     subgraph External [" "]
