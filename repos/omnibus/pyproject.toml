@@ -32,6 +32,9 @@ poethepoet = "^0.24.3"
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core>=1.0.0"]
 
+[tool.poe.tasks]
+api_service = { shell = 'export APP__ROOT_PATH=$(pwd) && python3 -m api.main' }
+
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
