@@ -1,0 +1,121 @@
+services:
+  cockroach:
+    container_name: database
+    image: cockroachdb/cockroach:v23.1.8
+    command: start-single-node --insecure --http-addr 0.0.0.0
+    ports:
+      - "26257:26257"
+      - "8080:8080"
+    volumes:
+      - ./dev_setup/database/sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "/cockroach/cockroach", "sql", "--insecure", "--host=localhost", "-e", "SELECT 1"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  db-init:
+    image: cockroachdb/cockroach:v23.1.8
+    depends_on:
+      cockroach:
+        condition: service_healthy
+    volumes:
+      - ./dev_setup/database/sql:/docker-entrypoint-initdb.d
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "/cockroach/cockroach sql --insecure --host=cockroach < /docker-entrypoint-initdb.d/init.sql"
+    restart: "no"
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.8-management
+    hostname: broker
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ./dev_setup/broker/config/definitions.json:/etc/rabbitmq/definitions.json
+      - ./dev_setup/broker/config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_NODE_IP_ADDRESS=0.0.0.0
+      - NODE_IP_ADDRESS=0.0.0.0
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit loopback_users "none"
+    command: >
+      sh -c "rabbitmq-server"
+
+  payment-gateway:
+    build: ./repos/payment_gateway
+    ports:
+      - "8082:8082"
+    environment:
+      DATABASE_URL: cockroachdb+asyncpg://root@cockroach:26257/payment_gateway
+      OMNIBUS_WEBHOOK_URL: http://omnibus:8084/webhooks/moyasar
+      MOYASAR_WEBHOOK_SECRET: dev-secret
+      UVICORN_RELOAD: "false"
+    depends_on:
+      cockroach:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_started
+    restart: on-failure
+
+  omnibus:
+    build: ./repos/omnibus
+    ports:
+      - "8084:8084"
+    environment:
+      DATABASE_URL: cockroachdb+asyncpg://root@cockroach:26257/omnibus
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      MOYASAR_WEBHOOK_SECRET: dev-secret
+      UVICORN_RELOAD: "false"
+    depends_on:
+      cockroach:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_started
+    restart: on-failure
+
+  investment-wallet:
+    build: ./repos/investment-wallet
+    ports:
+      - "8083:8083"
+    environment:
+      DATABASE_URL: cockroachdb+asyncpg://root@cockroach:26257/investment_wallet
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      PAYMENT_GATEWAY_URL: http://payment-gateway:8082
+      UVICORN_RELOAD: "false"
+    depends_on:
+      cockroach:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_started
+    restart: on-failure
+
+  gateway:
+    build: ./repos/gateway
+    ports:
+      - "8081:8081"
+    environment:
+      WALLET_URL: http://investment-wallet:8083
+      OMNIBUS_URL: http://omnibus:8084
+      UVICORN_RELOAD: "false"
+    depends_on:
+      cockroach:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_started
+      investment-wallet:
+        condition: service_started
+      omnibus:
+        condition: service_started
+    restart: on-failure

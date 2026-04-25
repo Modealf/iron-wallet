@@ -1,8 +1,10 @@
+import os
+
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-WALLET_URL = "http://localhost:8083"
-OMNIBUS_URL = "http://localhost:8084"
+WALLET_URL = os.getenv("WALLET_URL", "http://localhost:8083")
+OMNIBUS_URL = os.getenv("OMNIBUS_URL", "http://localhost:8084")
 
 
 @retry(
