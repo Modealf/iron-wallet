@@ -50,3 +50,37 @@ async def record_provider_webhook(
         },
     )
     return statement_id
+
+
+class BankTransferDuplicate(Exception):
+    pass
+
+
+async def record_bank_transfer(session, *, body) -> uuid.UUID:
+    statement_id = uuid.uuid4()
+    session.add(Statement(
+        id=statement_id, kind="fund_transfer",
+        amount_minor=body.amount_minor, currency=body.currency,
+        virtual_iban=body.virtual_iban, correlation_id=body.wallet_id,
+        source_ref=body.bank_reference,
+    ))
+    try:
+        await session.flush()
+    except Exception as e:
+        if "statements_kind_source_ref_unique" in str(e):
+            raise BankTransferDuplicate() from e
+        raise
+    await outbox.enqueue(
+        session,
+        aggregate_id=statement_id,
+        type_="settlement.completed",
+        payload={
+            "statement_id": str(statement_id),
+            "kind": "fund_transfer",
+            "amount_minor": body.amount_minor,
+            "currency": body.currency,
+            "wallet_id": str(body.wallet_id),
+            "virtual_iban": body.virtual_iban,
+        },
+    )
+    return statement_id
