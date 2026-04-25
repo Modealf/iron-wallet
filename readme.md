@@ -98,6 +98,21 @@ cd /repos/gateway
 poetry run poe api_service
 ```
 
+## Quick demo (Docker)
+
+One command brings up Cockroach, RabbitMQ, and all 4 services:
+
+    make demo
+
+When all containers are healthy, run the smoke scripts in another terminal:
+
+    ./examples/top-up.sh
+    ./examples/fund-transfer.sh
+
+Tear down: `make demo-down`.
+
+Use the manual flow below ("Running the POC") if you want each service's logs in its own terminal.
+
 ## Running the POC
 
 ### One-time setup

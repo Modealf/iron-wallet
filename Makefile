@@ -11,6 +11,10 @@ help:
 	@echo "     To run dependencies and start the project"
 	@echo -e $(YELLOW) "make githooks_enable:" $(NOCOLOR)
 	@echo "     to tear down the project"
+	@echo -e $(YELLOW) "make demo:" $(NOCOLOR)
+	@echo "     Run the full stack (Cockroach + RabbitMQ + 4 services) via docker compose"
+	@echo -e $(YELLOW) "make demo-down:" $(NOCOLOR)
+	@echo "     Tear down the dockerized demo stack"
 
 
 up:
@@ -18,6 +22,12 @@ up:
 
 down:
 	./dev_setup/down.sh
+
+demo:
+	docker compose up --build
+
+demo-down:
+	docker compose down -v
 
 
 install: 
