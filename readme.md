@@ -97,3 +97,35 @@ start Gateway service
 cd /repos/gateway
 poetry run poe api_service
 ```
+
+## Running the POC
+
+### One-time setup
+
+```shell
+make up
+make install
+docker exec database /cockroach/cockroach sql --insecure -e "CREATE DATABASE IF NOT EXISTS payment_gateway_test; CREATE DATABASE IF NOT EXISTS omnibus_test; CREATE DATABASE IF NOT EXISTS investment_wallet_test"
+```
+
+### Start services (one terminal each)
+
+```shell
+cd repos/payment_gateway   && poetry run poe api_service   # :8082
+cd repos/omnibus           && poetry run poe api_service   # :8084
+cd repos/investment-wallet && poetry run poe api_service   # :8083
+cd repos/gateway           && poetry run poe api_service   # :8081
+```
+
+### Smoke test
+
+```shell
+./examples/top-up.sh
+./examples/fund-transfer.sh
+```
+
+### Tests
+
+```shell
+for s in payment_gateway omnibus investment-wallet; do (cd repos/$s && poetry run pytest -v); done
+```
