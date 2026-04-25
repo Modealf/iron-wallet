@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+.mypy_cache/
+.pytest_cache/
+.DS_Store
+*.egg-info/
+.coverage
+htmlcov/
+.idea/
+.vscode/*
+!.vscode/settings.json
+.claude/

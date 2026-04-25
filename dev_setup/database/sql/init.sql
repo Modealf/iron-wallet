@@ -1,0 +1,5 @@
+CREATE DATABASE IF NOT EXISTS omnibus;
+
+CREATE DATABASE IF NOT EXISTS payment_gateway;
+
+CREATE DATABASE IF NOT EXISTS investment_wallet;

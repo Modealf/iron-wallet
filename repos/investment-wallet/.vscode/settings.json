@@ -1,0 +1,41 @@
+{
+    "files.exclude": {
+        "**/.DS_Store": true,
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/.mypy_cache": true,
+        "**/__init__.py": false,
+        ".venv": true,
+        "Pipfile.lock": true,
+    },
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 120,
+    "editor.rulers": [
+        120
+    ],
+    "search.exclude": {
+        "repos/**/.venv/": true,
+        "build/": true,
+        ".empty": true,
+        ".pytest_cache/": true
+    },
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnPaste": false,
+        "editor.formatOnSave": true,
+    },
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.importFormat": "absolute",
+    "python.analysis.extraPaths": [
+        "../../repos/investment-wallet",
+    ],
+    "python.autoComplete.extraPaths": [
+        "../../repos/investment-wallet",
+    ],
+    "pylint.args": [
+        "--extension-pkg-whitelist='pydantic'",
+        "--rcfile=../../../.pylintrc"
+      ],
+   
+    
+}

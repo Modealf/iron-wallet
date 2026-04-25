@@ -1,0 +1,29 @@
+{
+    "folders": [
+      {
+        "path": "repos/gateway"
+      },
+      {
+        "path": "repos/payment_gateway"
+      },
+      {
+        "path": "repos/omnibus"
+      },
+      {
+        "path": "repos/investment-wallet"
+      },
+      {
+        "name": "root",
+        "path": "."
+      }
+    ],
+    "settings": {
+      "workbench.colorCustomizations": {
+        "activityBar.background": "#182B58",
+        "titleBar.activeBackground": "#223D7C",
+        "titleBar.activeForeground": "#FAFBFE"
+      }
+    },
+  
+  }
+  

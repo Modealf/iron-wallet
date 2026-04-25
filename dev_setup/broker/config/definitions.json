@@ -1,0 +1,65 @@
+{
+    "users": [
+        {
+            "name": "worker_celery",
+            "password": "worker_celery_password",
+            "hashing_algorithm": "rabbit_password_hashing_sha256",
+            "tags": "worker_celery"
+        }
+    ],
+    "vhosts": [
+        {
+            "name": "tasks"
+        }
+    ],
+    "permissions": [
+        {
+            "user": "guest",
+            "vhost": "tasks",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        },
+        {
+            "user": "worker_celery",
+            "vhost": "tasks",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        }
+    ],
+    "exchanges": [
+        {
+            "name": "task_exchange",
+            "vhost": "tasks",
+            "type": "direct",
+            "durable": true,
+            "auto_delete": false,
+            "internal": false,
+            "arguments": {}
+        }
+    ],
+    "queues": [
+ 
+        {
+            "name": "omnibus_task_queue",
+            "vhost": "tasks",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {
+                "x-queue-type": "classic"
+            }
+        }
+    ],
+    "bindings": [
+        {
+            "source": "task_exchange",
+            "vhost": "tasks",
+            "destination": "omnibus_task_queue",
+            "destination_type": "queue",
+            "routing_key": "task.account.statements.#",
+            "arguments": {}
+        }
+    ],
+    "policies": [ ]
+}
