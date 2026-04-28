@@ -119,3 +119,13 @@ services:
       omnibus:
         condition: service_started
     restart: on-failure
+
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "8085:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      gateway:
+        condition: service_started

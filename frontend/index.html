@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IronWallet — Live Pipeline</title>
+<style>
+  :root {
+    --bg: #f8f6f3;
+    --panel: #ffffff;
+    --ink: #1a1a1a;
+    --muted: #5a5a5a;
+    --hint: #6a6a6a;
+    --line: #4a4a4a;
+    --line-soft: #d6d2cc;
+    --c-wallet: #9dd4c7;
+    --c-pg:     #a8c5e6;
+    --c-prov:   #f4e4c1;
+    --c-omni:   #e8e6e3;
+    --c-broker: #e9d8c4;
+    --c-paid:   #2f7d6b;
+    --c-pending:#a87a1c;
+    --c-failed: #b13f3f;
+    --shadow: 0 1px 2px rgba(74,74,74,0.06), 0 1px 4px rgba(74,74,74,0.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 32px 24px 64px;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  header { margin-bottom: 28px; }
+  header h1 { font-size: 24px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--muted); font-size: 13px; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel);
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .panel h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 0 0 14px;
+  }
+  .balance {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 36px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1;
+    transition: color 250ms ease;
+  }
+  .balance .currency {
+    font-size: 14px;
+    color: var(--muted);
+    margin-left: 6px;
+    font-weight: 500;
+  }
+  .balance.flash { color: var(--c-paid); }
+
+  .meta {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--hint);
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    word-break: break-all;
+  }
+
+  .controls { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .controls label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+  .controls input {
+    font: inherit;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .controls button {
+    font: inherit;
+    font-weight: 600;
+    background: var(--ink);
+    color: #fff;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: transform 120ms ease, background 120ms ease;
+  }
+  .controls button:hover { background: #2a2a2a; }
+  .controls button:active { transform: translateY(1px); }
+  .controls button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* TIMELINE */
+  .timelines { display: flex; flex-direction: column; gap: 14px; }
+  .topup {
+    border: 1.5px solid var(--line-soft);
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: #fdfbf8;
+  }
+  .topup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 12px;
+  }
+  .topup-id {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--hint);
+  }
+  .topup-amount {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border: 1.5px solid var(--line);
+  }
+  .pill[data-status="PENDING"]    { background: #fff3df; color: var(--c-pending); border-color: #ddc28a; }
+  .pill[data-status="PROCESSING"] { background: var(--c-pg); color: #1f3a5b; border-color: #6f9bcc; }
+  .pill[data-status="PAID"]       { background: var(--c-wallet); color: #1a4d3f; border-color: #3a8c7a; }
+  .pill[data-status="FAILED"]     { background: #ffe1e1; color: var(--c-failed); border-color: #c97777; }
+
+  .timeline {
+    position: relative;
+    height: 70px;
+    border-radius: 8px;
+    background:
+      linear-gradient(to right, transparent 0, transparent calc(100% - 1px), var(--line-soft) 100%) ,
+      repeating-linear-gradient(to right, transparent 0, transparent 79px, var(--line-soft) 79px, var(--line-soft) 80px);
+    border: 1px dashed var(--line-soft);
+  }
+  .lane-label {
+    position: absolute;
+    left: 6px;
+    top: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--hint);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .marker {
+    position: absolute;
+    top: 22px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    transition: all 200ms ease;
+    transform: translateX(-50%);
+  }
+  .marker.req     { background: #d8d4cd; }
+  .marker.pending { background: var(--c-pending); }
+  .marker.proc    { background: var(--c-pg); }
+  .marker.paid    { background: var(--c-paid); }
+  .marker.failed  { background: var(--c-failed); }
+  .marker .tag {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .marker .ts {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 10px;
+    color: var(--hint);
+  }
+  .gap-band {
+    position: absolute;
+    top: 18px;
+    height: 18px;
+    background: rgba(232, 230, 227, 0.6);
+    border: 1px dashed var(--line-soft);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  .gap-band .gap-label {
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--hint);
+    font-style: italic;
+    white-space: nowrap;
+  }
+
+  /* LOG */
+  .log {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--ink);
+    max-height: 280px;
+    overflow-y: auto;
+    background: #fdfbf8;
+    border: 1px dashed var(--line-soft);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .log-line { padding: 1px 0; white-space: pre-wrap; }
+  .log-line .t { color: var(--hint); }
+  .log-line .ev-pending  { color: var(--c-pending); font-weight: 600; }
+  .log-line .ev-proc     { color: #2256a0; font-weight: 600; }
+  .log-line .ev-paid     { color: var(--c-paid); font-weight: 600; }
+  .log-line .ev-failed   { color: var(--c-failed); font-weight: 600; }
+  .log-line .ev-info     { color: var(--muted); }
+
+  .empty {
+    text-align: center;
+    color: var(--hint);
+    font-style: italic;
+    padding: 28px 0;
+  }
+
+  .health {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--hint);
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--c-paid);
+    box-shadow: 0 0 0 0 rgba(47, 125, 107, 0.4);
+    animation: pulse 1800ms infinite;
+  }
+  .dot.bad { background: var(--c-failed); animation: none; }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(47, 125, 107, 0.5); }
+    70%  { box-shadow: 0 0 0 6px rgba(47, 125, 107, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(47, 125, 107, 0); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>IronWallet — Live Pipeline</h1>
+    <p>Watch a top-up settle. The 200 returns immediately; the wallet balance only ticks up after the async settlement event lands.</p>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: Wallet + Controls -->
+    <div class="panel">
+      <h2>Demo Wallet</h2>
+      <div class="balance" id="balance">— <span class="currency">SAR</span></div>
+      <div class="meta" id="walletMeta">loading…</div>
+
+      <div class="controls">
+        <label>
+          Amount (minor units, e.g. 5000 = 50.00 SAR)
+          <input id="amount" type="number" min="1" step="100" value="5000" />
+        </label>
+        <button id="triggerBtn" type="button">Trigger Top-Up</button>
+      </div>
+
+      <div class="health">
+        <span class="dot" id="healthDot"></span>
+        <span id="healthLabel">polling gateway…</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: Timelines + Log -->
+    <div class="panel">
+      <h2>Recent top-ups</h2>
+      <div id="timelines" class="timelines"></div>
+
+      <h2 style="margin-top: 22px;">Event log</h2>
+      <div id="log" class="log"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(() => {
+  // Resolve gateway URL: same host as page, port 8081.
+  const GATEWAY = `${location.protocol}//${location.hostname}:8081`;
+  const POLL_MS = 500;
+  const TIMELINE_WINDOW_MS = 3000; // how much time fits across the lane visually
+  let walletId = null;
+  let walletState = null;
+  let inFlight = new Map(); // top_up_id -> { startedAt, lastStatus }
+  let logBuf = [];
+
+  const $balance = document.getElementById('balance');
+  const $walletMeta = document.getElementById('walletMeta');
+  const $timelines = document.getElementById('timelines');
+  const $log = document.getElementById('log');
+  const $btn = document.getElementById('triggerBtn');
+  const $amount = document.getElementById('amount');
+  const $healthDot = document.getElementById('healthDot');
+  const $healthLabel = document.getElementById('healthLabel');
+
+  function fmtTime(d) {
+    const pad = (n, w=2) => String(n).padStart(w, '0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(),3)}`;
+  }
+  function fmtMoney(minor) { return (minor/100).toFixed(2); }
+  function uuid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random()*16|0; const v = c=='x'?r:(r&0x3|0x8); return v.toString(16);
+    });
+  }
+  function logLine(text, klass='ev-info') {
+    const t = fmtTime(new Date());
+    logBuf.push({ t, text, klass });
+    if (logBuf.length > 100) logBuf = logBuf.slice(-100);
+    $log.innerHTML = logBuf.slice().reverse().map(L =>
+      `<div class="log-line"><span class="t">[${L.t}]</span> <span class="${L.klass}">${L.text}</span></div>`
+    ).join('');
+  }
+
+  async function loadWallet() {
+    try {
+      const url = walletId ? `${GATEWAY}/wallets/${walletId}` : `${GATEWAY}/wallets/demo`;
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      walletId = data.id;
+      walletState = data;
+      renderWallet(data);
+      setHealth(true);
+    } catch (e) {
+      setHealth(false, e.message);
+    }
+  }
+
+  function setHealth(ok, msg=null) {
+    if (ok) {
+      $healthDot.classList.remove('bad');
+      $healthLabel.textContent = `polling gateway · ${POLL_MS}ms`;
+    } else {
+      $healthDot.classList.add('bad');
+      $healthLabel.textContent = `gateway unreachable${msg?` (${msg})`:''}`;
+    }
+  }
+
+  function renderWallet(data) {
+    const newBalance = data.balance_minor;
+    const prevBalance = $balance.dataset.value ? Number($balance.dataset.value) : null;
+    $balance.innerHTML = `${fmtMoney(newBalance)} <span class="currency">${data.currency}</span>`;
+    $balance.dataset.value = newBalance;
+    if (prevBalance !== null && newBalance > prevBalance) {
+      $balance.classList.remove('flash');
+      void $balance.offsetWidth; // restart animation
+      $balance.classList.add('flash');
+      logLine(`balance: +${fmtMoney(newBalance - prevBalance)} ${data.currency}  →  ${fmtMoney(newBalance)} ${data.currency}`, 'ev-paid');
+      setTimeout(() => $balance.classList.remove('flash'), 1200);
+    }
+    $walletMeta.textContent = data.id;
+    renderTimelines(data.recent_top_ups);
+  }
+
+  function renderTimelines(topUps) {
+    if (!topUps || topUps.length === 0) {
+      $timelines.innerHTML = '<div class="empty">No top-ups yet. Click "Trigger Top-Up" to start.</div>';
+      return;
+    }
+    const recent = topUps.slice(0, 4);
+    $timelines.innerHTML = recent.map(renderTopUp).join('');
+
+    // Detect status transitions for log
+    for (const t of recent) {
+      const prev = inFlight.get(t.id);
+      if (!prev) {
+        inFlight.set(t.id, { startedAt: Date.parse(t.created_at), lastStatus: t.status });
+        continue;
+      }
+      if (prev.lastStatus !== t.status) {
+        const cls = ({ PENDING: 'ev-pending', PROCESSING: 'ev-proc', PAID: 'ev-paid', FAILED: 'ev-failed' })[t.status] || 'ev-info';
+        logLine(`top_up ${t.id.slice(0,8)} → ${t.status}`, cls);
+        prev.lastStatus = t.status;
+      }
+    }
+  }
+
+  function renderTopUp(t) {
+    const startedAt = Date.parse(t.created_at);
+    const updatedAt = Date.parse(t.updated_at);
+    const now = Date.now();
+    const elapsed = Math.max(now - startedAt, updatedAt - startedAt);
+    const totalMs = Math.max(elapsed + 200, TIMELINE_WINDOW_MS / 2); // grow as needed
+    const x = (ms) => `${Math.min(98, Math.max(2, (ms / totalMs) * 100))}%`;
+
+    // Always show: request marker (t=0)
+    let markers = `
+      <div class="lane-label">timeline</div>
+      <div class="marker req" style="left: ${x(0)}">
+        <div class="tag">REQ</div>
+        <div class="ts">+0 ms</div>
+      </div>
+      <div class="marker pending" style="left: ${x(50)}">
+        <div class="tag">PENDING</div>
+      </div>
+    `;
+    // PROCESSING marker
+    if (['PROCESSING', 'PAID', 'FAILED'].includes(t.status)) {
+      const procT = updatedAt - startedAt; // approximate moment of first transition
+      markers += `<div class="marker proc" style="left: ${x(procT * 0.6)}"><div class="tag">PROCESSING</div></div>`;
+    }
+    // PAID marker
+    if (t.status === 'PAID') {
+      const paidT = updatedAt - startedAt;
+      // gap band between PROC and PAID — the eventual-consistency story
+      const gapStart = (procStartFraction(paidT) + 0.6) / 2;
+      markers += `
+        <div class="gap-band" style="left: ${x(paidT * 0.62)}; width: ${Math.max(8, ((paidT * 0.36) / totalMs) * 100)}%;">
+          <div class="gap-label">async gap (~${(paidT/1000).toFixed(2)}s) — settlement in flight</div>
+        </div>
+        <div class="marker paid" style="left: ${x(paidT * 0.98)}">
+          <div class="tag">PAID</div>
+          <div class="ts">+${paidT} ms</div>
+        </div>
+      `;
+    }
+    if (t.status === 'FAILED') {
+      const ft = updatedAt - startedAt;
+      markers += `<div class="marker failed" style="left: ${x(ft * 0.95)}"><div class="tag">FAILED</div></div>`;
+    }
+
+    return `
+      <div class="topup">
+        <div class="topup-header">
+          <span class="topup-id">${t.id.slice(0,8)}…</span>
+          <span class="topup-amount">${fmtMoney(t.amount_minor)} ${t.currency}</span>
+          <span class="pill" data-status="${t.status}">${t.status}</span>
+        </div>
+        <div class="timeline">${markers}</div>
+      </div>
+    `;
+  }
+
+  function procStartFraction() { return 0.05; }
+
+  async function triggerTopUp() {
+    if (!walletId) { logLine('demo wallet not yet loaded; please wait', 'ev-failed'); return; }
+    const amount = Math.max(1, Number($amount.value || 0));
+    const idemKey = uuid();
+    $btn.disabled = true;
+    logLine(`POST /top-ups  · amount=${amount}  · idem=${idemKey.slice(0,8)}`, 'ev-info');
+    try {
+      const r = await fetch(`${GATEWAY}/top-ups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idemKey },
+        body: JSON.stringify({ wallet_id: walletId, amount_minor: amount, currency: 'SAR' })
+      });
+      if (!r.ok) {
+        const body = await r.text();
+        logLine(`POST /top-ups → ${r.status}  ${body}`, 'ev-failed');
+        return;
+      }
+      const data = await r.json();
+      logLine(`POST /top-ups → 200  · top_up ${data.top_up_id.slice(0,8)} ${data.status}`, 'ev-pending');
+      inFlight.set(data.top_up_id, { startedAt: Date.now(), lastStatus: data.status });
+    } catch (e) {
+      logLine(`POST /top-ups errored: ${e.message}`, 'ev-failed');
+    } finally {
+      setTimeout(() => { $btn.disabled = false; }, 250);
+    }
+  }
+
+  $btn.addEventListener('click', triggerTopUp);
+
+  // Initial load + polling
+  loadWallet();
+  setInterval(loadWallet, POLL_MS);
+
+})();
+</script>
+</body>
+</html>
