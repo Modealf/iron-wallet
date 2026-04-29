@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>IronWallet — Live Pipeline</title>
+<link rel="icon" href="data:," />
 <style>
   :root {
     --bg: #f8f6f3;
@@ -13,6 +14,7 @@
     --hint: #6a6a6a;
     --line: #4a4a4a;
     --line-soft: #d6d2cc;
+    --line-softer: #ece8e1;
     --c-wallet: #9dd4c7;
     --c-pg:     #a8c5e6;
     --c-prov:   #f4e4c1;
@@ -33,16 +35,16 @@
     line-height: 1.5;
     padding: 32px 24px 64px;
   }
-  .wrap { max-width: 1100px; margin: 0 auto; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
   header { margin-bottom: 28px; }
   header h1 { font-size: 24px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
-  header p { margin: 0; color: var(--muted); font-size: 13px; }
+  header p { margin: 0; color: var(--muted); font-size: 13px; max-width: 720px; }
   .grid {
     display: grid;
-    grid-template-columns: 1fr 1.6fr;
+    grid-template-columns: 360px 1fr;
     gap: 20px;
   }
-  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  @media (max-width: 940px) { .grid { grid-template-columns: 1fr; } }
 
   .panel {
     background: var(--panel);
@@ -52,13 +54,14 @@
     box-shadow: var(--shadow);
   }
   .panel h2 {
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--muted);
     font-weight: 600;
     margin: 0 0 14px;
   }
+
   .balance {
     font-family: "SF Mono", Menlo, Consolas, monospace;
     font-variant-numeric: tabular-nums;
@@ -79,23 +82,38 @@
 
   .meta {
     margin-top: 8px;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--hint);
     font-family: "SF Mono", Menlo, Consolas, monospace;
     word-break: break-all;
   }
 
-  .controls { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
-  .controls label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+  .controls { margin-top: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .controls > .group {
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 12px 14px;
+    border: 1px dashed var(--line-soft);
+    border-radius: 10px;
+    background: #fdfbf8;
+  }
+  .controls .group-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 600;
+  }
   .controls input {
     font: inherit;
     font-family: "SF Mono", Menlo, Consolas, monospace;
     border: 1.5px solid var(--line);
     border-radius: 8px;
     padding: 8px 10px;
-    background: var(--bg);
+    background: #ffffff;
     color: var(--ink);
   }
+  .controls .row { display: flex; gap: 8px; align-items: stretch; }
+  .controls .row input { flex: 1; min-width: 0; }
   .controls button {
     font: inherit;
     font-weight: 600;
@@ -103,47 +121,64 @@
     color: #fff;
     border: 1.5px solid var(--line);
     border-radius: 8px;
-    padding: 10px 14px;
+    padding: 0 16px;
     cursor: pointer;
-    transition: transform 120ms ease, background 120ms ease;
+    transition: background 120ms ease, transform 120ms ease;
+    white-space: nowrap;
   }
   .controls button:hover { background: #2a2a2a; }
   .controls button:active { transform: translateY(1px); }
   .controls button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .controls button.secondary {
+    background: var(--panel);
+    color: var(--ink);
+  }
+  .controls button.secondary:hover { background: #f3efe9; }
 
-  /* TIMELINE */
-  .timelines { display: flex; flex-direction: column; gap: 14px; }
-  .topup {
+  .hint { font-size: 11px; color: var(--hint); }
+
+  /* Activity feed */
+  .feed { display: flex; flex-direction: column; gap: 12px; }
+  .card {
     border: 1.5px solid var(--line-soft);
     border-radius: 12px;
     padding: 14px 16px;
     background: #fdfbf8;
   }
-  .topup-header {
+  .card.fund { background: #f7f1e6; border-color: #e3d7be; }
+  .card-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
     gap: 12px;
+    margin-bottom: 12px;
   }
-  .topup-id {
-    font-family: "SF Mono", Menlo, Consolas, monospace;
-    font-size: 12px;
+  .card-kind {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     color: var(--hint);
   }
-  .topup-amount {
+  .card-id {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--hint);
+  }
+  .card-amount {
+    margin-left: auto;
     font-family: "SF Mono", Menlo, Consolas, monospace;
     font-weight: 600;
     font-size: 14px;
+    font-variant-numeric: tabular-nums;
   }
   .pill {
     display: inline-block;
     padding: 3px 10px;
     border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 10px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.07em;
     border: 1.5px solid var(--line);
   }
   .pill[data-status="PENDING"]    { background: #fff3df; color: var(--c-pending); border-color: #ddc28a; }
@@ -151,83 +186,96 @@
   .pill[data-status="PAID"]       { background: var(--c-wallet); color: #1a4d3f; border-color: #3a8c7a; }
   .pill[data-status="FAILED"]     { background: #ffe1e1; color: var(--c-failed); border-color: #c97777; }
 
-  .timeline {
+  /* MILESTONE BAR */
+  .bar {
     position: relative;
-    height: 70px;
-    border-radius: 8px;
-    background:
-      linear-gradient(to right, transparent 0, transparent calc(100% - 1px), var(--line-soft) 100%) ,
-      repeating-linear-gradient(to right, transparent 0, transparent 79px, var(--line-soft) 79px, var(--line-soft) 80px);
-    border: 1px dashed var(--line-soft);
+    height: 80px;
+    margin: 6px 6px 4px;
   }
-  .lane-label {
+  .track {
     position: absolute;
-    left: 6px;
-    top: 4px;
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--hint);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    top: 38px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--line-softer);
+    border-radius: 2px;
   }
-  .marker {
+  .gap {
     position: absolute;
-    top: 22px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 1.5px solid var(--line);
-    transition: all 200ms ease;
-    transform: translateX(-50%);
+    top: 36px;
+    height: 8px;
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(168, 197, 230, 0.35) 0,
+      rgba(168, 197, 230, 0.35) 4px,
+      rgba(168, 197, 230, 0.15) 4px,
+      rgba(168, 197, 230, 0.15) 8px
+    );
+    border-top: 1px dashed #6f9bcc;
+    border-bottom: 1px dashed #6f9bcc;
   }
-  .marker.req     { background: #d8d4cd; }
-  .marker.pending { background: var(--c-pending); }
-  .marker.proc    { background: var(--c-pg); }
-  .marker.paid    { background: var(--c-paid); }
-  .marker.failed  { background: var(--c-failed); }
-  .marker .tag {
-    position: absolute;
-    top: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--ink);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-  .marker .ts {
-    position: absolute;
-    top: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
-    font-family: "SF Mono", Menlo, Consolas, monospace;
-    font-size: 10px;
-    color: var(--hint);
-  }
-  .gap-band {
+  .gap-text {
     position: absolute;
     top: 18px;
-    height: 18px;
-    background: rgba(232, 230, 227, 0.6);
-    border: 1px dashed var(--line-soft);
-    border-radius: 4px;
-    pointer-events: none;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-style: italic;
+    color: #2256a0;
+    white-space: nowrap;
   }
-  .gap-band .gap-label {
+  .ms {
     position: absolute;
-    top: -16px;
+    top: 32px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    transform: translateX(-50%);
+    background: #ffffff;
+  }
+  .ms.kind-req     { background: #d8d4cd; }
+  .ms.kind-sync    { background: var(--c-pg); }
+  .ms.kind-paid    { background: var(--c-paid); border-color: #1d5a4a; }
+  .ms.kind-failed  { background: var(--c-failed); border-color: #863131; }
+  .ms.kind-bank    { background: var(--c-broker); border-color: #a88848; }
+
+  .ms-label {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    white-space: nowrap;
+    text-align: center;
+  }
+  .ms-label.above { top: -22px; }
+  .ms-label.below { top: 22px; }
+
+  .ms-time {
+    position: absolute;
     left: 50%;
     transform: translateX(-50%);
     font-size: 10px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
     color: var(--hint);
-    font-style: italic;
     white-space: nowrap;
   }
+  .ms-time.above { top: -36px; }
+  .ms-time.below { top: 36px; }
 
-  /* LOG */
+  .empty {
+    text-align: center;
+    color: var(--hint);
+    font-style: italic;
+    padding: 32px 0;
+  }
+
+  /* Log */
   .log {
     font-family: "SF Mono", Menlo, Consolas, monospace;
     font-size: 12px;
@@ -245,17 +293,11 @@
   .log-line .ev-proc     { color: #2256a0; font-weight: 600; }
   .log-line .ev-paid     { color: var(--c-paid); font-weight: 600; }
   .log-line .ev-failed   { color: var(--c-failed); font-weight: 600; }
+  .log-line .ev-bank     { color: #a88848; font-weight: 600; }
   .log-line .ev-info     { color: var(--muted); }
 
-  .empty {
-    text-align: center;
-    color: var(--hint);
-    font-style: italic;
-    padding: 28px 0;
-  }
-
   .health {
-    margin-top: 18px;
+    margin-top: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -267,7 +309,6 @@
     height: 8px;
     border-radius: 50%;
     background: var(--c-paid);
-    box-shadow: 0 0 0 0 rgba(47, 125, 107, 0.4);
     animation: pulse 1800ms infinite;
   }
   .dot.bad { background: var(--c-failed); animation: none; }
@@ -283,22 +324,35 @@
 
   <header>
     <h1>IronWallet — Live Pipeline</h1>
-    <p>Watch a top-up settle. The 200 returns immediately; the wallet balance only ticks up after the async settlement event lands.</p>
+    <p>
+      Two ways to fund a wallet, both finish in the same place. <strong>Top-up</strong> goes through the payment-gateway and a card provider; the 200 returns immediately but the balance only ticks up once the async settlement event lands. <strong>Fund transfer</strong> arrives at omnibus directly from the user's bank — no payment-gateway hop, no PENDING gating.
+    </p>
   </header>
 
   <div class="grid">
-    <!-- LEFT: Wallet + Controls -->
+
     <div class="panel">
       <h2>Demo Wallet</h2>
       <div class="balance" id="balance">— <span class="currency">SAR</span></div>
       <div class="meta" id="walletMeta">loading…</div>
 
       <div class="controls">
-        <label>
-          Amount (minor units, e.g. 5000 = 50.00 SAR)
-          <input id="amount" type="number" min="1" step="100" value="5000" />
-        </label>
-        <button id="triggerBtn" type="button">Trigger Top-Up</button>
+        <div class="group">
+          <span class="group-title">Top-up via card</span>
+          <span class="hint">client → gateway → wallet → payment-gateway → provider → settlement → wallet credits</span>
+          <div class="row">
+            <input id="topupAmount" type="number" min="1" step="100" value="5000" aria-label="Top-up amount in minor units" />
+            <button id="topupBtn" type="button">Trigger Top-Up</button>
+          </div>
+        </div>
+        <div class="group">
+          <span class="group-title">Fund transfer via bank</span>
+          <span class="hint">bank → omnibus → settlement → wallet credits  ·  no payment-gateway, no PENDING</span>
+          <div class="row">
+            <input id="fundAmount" type="number" min="1" step="100" value="10000" aria-label="Fund-transfer amount in minor units" />
+            <button id="fundBtn" type="button" class="secondary">Trigger Bank Transfer</button>
+          </div>
+        </div>
       </div>
 
       <div class="health">
@@ -307,70 +361,58 @@
       </div>
     </div>
 
-    <!-- RIGHT: Timelines + Log -->
     <div class="panel">
-      <h2>Recent top-ups</h2>
-      <div id="timelines" class="timelines"></div>
+      <h2>Recent activity</h2>
+      <div id="feed" class="feed"></div>
 
       <h2 style="margin-top: 22px;">Event log</h2>
       <div id="log" class="log"></div>
     </div>
-  </div>
 
+  </div>
 </div>
 
 <script>
 (() => {
-  // Resolve gateway URL: same host as page, port 8081.
   const GATEWAY = `${location.protocol}//${location.hostname}:8081`;
   const POLL_MS = 500;
-  const TIMELINE_WINDOW_MS = 3000; // how much time fits across the lane visually
+  const MIN_BAR_MS = 1500;     // visual minimum; very fast settlements still take up reasonable space
+  const MAX_BAR_MS = 6000;     // cap so very slow ones don't spread thin
+
   let walletId = null;
-  let walletState = null;
-  let inFlight = new Map(); // top_up_id -> { startedAt, lastStatus }
+  let prevBalance = null;
   let logBuf = [];
+  let knownStatus = new Map();   // top_up_id -> last seen status
+  let knownFundIds = new Set();  // fund_transfer ids we've already logged
+  let firstLoad = true;
 
-  const $balance = document.getElementById('balance');
-  const $walletMeta = document.getElementById('walletMeta');
-  const $timelines = document.getElementById('timelines');
-  const $log = document.getElementById('log');
-  const $btn = document.getElementById('triggerBtn');
-  const $amount = document.getElementById('amount');
-  const $healthDot = document.getElementById('healthDot');
-  const $healthLabel = document.getElementById('healthLabel');
+  const $ = (id) => document.getElementById(id);
+  const $balance = $('balance');
+  const $walletMeta = $('walletMeta');
+  const $feed = $('feed');
+  const $log = $('log');
+  const $topupBtn = $('topupBtn');
+  const $topupAmount = $('topupAmount');
+  const $fundBtn = $('fundBtn');
+  const $fundAmount = $('fundAmount');
+  const $healthDot = $('healthDot');
+  const $healthLabel = $('healthLabel');
 
-  function fmtTime(d) {
-    const pad = (n, w=2) => String(n).padStart(w, '0');
-    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(),3)}`;
-  }
-  function fmtMoney(minor) { return (minor/100).toFixed(2); }
-  function uuid() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-      const r = Math.random()*16|0; const v = c=='x'?r:(r&0x3|0x8); return v.toString(16);
-    });
-  }
-  function logLine(text, klass='ev-info') {
-    const t = fmtTime(new Date());
+  const pad = (n, w=2) => String(n).padStart(w, '0');
+  const fmtTime = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(),3)}`;
+  const fmtMoney = (minor) => (minor/100).toFixed(2);
+  const fmtMs = (ms) => ms < 1000 ? `${Math.round(ms)} ms` : `${(ms/1000).toFixed(2)} s`;
+  const uuid = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random()*16|0; const v = c=='x'?r:(r&0x3|0x8); return v.toString(16);
+  });
+
+  function logLine(text, klass='ev-info', when=null) {
+    const t = fmtTime(when || new Date());
     logBuf.push({ t, text, klass });
-    if (logBuf.length > 100) logBuf = logBuf.slice(-100);
+    if (logBuf.length > 200) logBuf = logBuf.slice(-200);
     $log.innerHTML = logBuf.slice().reverse().map(L =>
       `<div class="log-line"><span class="t">[${L.t}]</span> <span class="${L.klass}">${L.text}</span></div>`
     ).join('');
-  }
-
-  async function loadWallet() {
-    try {
-      const url = walletId ? `${GATEWAY}/wallets/${walletId}` : `${GATEWAY}/wallets/demo`;
-      const r = await fetch(url);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const data = await r.json();
-      walletId = data.id;
-      walletState = data;
-      renderWallet(data);
-      setHealth(true);
-    } catch (e) {
-      setHealth(false, e.message);
-    }
   }
 
   function setHealth(ok, msg=null) {
@@ -383,109 +425,179 @@
     }
   }
 
-  function renderWallet(data) {
+  async function loadWallet() {
+    try {
+      const url = walletId ? `${GATEWAY}/wallets/${walletId}` : `${GATEWAY}/wallets/demo`;
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      walletId = data.id;
+      render(data);
+      setHealth(true);
+      firstLoad = false;
+    } catch (e) {
+      setHealth(false, e.message);
+    }
+  }
+
+  function render(data) {
+    // Balance
     const newBalance = data.balance_minor;
-    const prevBalance = $balance.dataset.value ? Number($balance.dataset.value) : null;
     $balance.innerHTML = `${fmtMoney(newBalance)} <span class="currency">${data.currency}</span>`;
-    $balance.dataset.value = newBalance;
     if (prevBalance !== null && newBalance > prevBalance) {
       $balance.classList.remove('flash');
-      void $balance.offsetWidth; // restart animation
+      void $balance.offsetWidth;
       $balance.classList.add('flash');
       logLine(`balance: +${fmtMoney(newBalance - prevBalance)} ${data.currency}  →  ${fmtMoney(newBalance)} ${data.currency}`, 'ev-paid');
       setTimeout(() => $balance.classList.remove('flash'), 1200);
     }
+    prevBalance = newBalance;
     $walletMeta.textContent = data.id;
-    renderTimelines(data.recent_top_ups);
-  }
 
-  function renderTimelines(topUps) {
-    if (!topUps || topUps.length === 0) {
-      $timelines.innerHTML = '<div class="empty">No top-ups yet. Click "Trigger Top-Up" to start.</div>';
+    // Detect transitions for log (only after first load, so reload doesn't spam)
+    if (!firstLoad) {
+      for (const t of data.recent_top_ups) {
+        const prev = knownStatus.get(t.id);
+        if (prev !== t.status) {
+          if (prev !== undefined) {
+            const cls = ({ PENDING: 'ev-pending', PROCESSING: 'ev-proc', PAID: 'ev-paid', FAILED: 'ev-failed' })[t.status] || 'ev-info';
+            logLine(`top_up ${t.id.slice(0,8)} → ${t.status}`, cls);
+          }
+          knownStatus.set(t.id, t.status);
+        }
+      }
+      for (const f of data.recent_fund_transfers) {
+        if (!knownFundIds.has(f.id)) {
+          knownFundIds.add(f.id);
+          logLine(`fund_transfer ${f.id.slice(0,8)} CREDITED  · +${fmtMoney(f.amount_minor)} ${f.currency}`, 'ev-bank');
+        }
+      }
+    } else {
+      for (const t of data.recent_top_ups) knownStatus.set(t.id, t.status);
+      for (const f of data.recent_fund_transfers) knownFundIds.add(f.id);
+      // Backfill log with last few actions for context
+      const all = [
+        ...data.recent_top_ups.map(t => ({ kind: 'top_up', t, when: new Date(t.updated_at) })),
+        ...data.recent_fund_transfers.map(f => ({ kind: 'fund_transfer', t: f, when: new Date(f.created_at) })),
+      ].sort((a,b) => a.when - b.when).slice(-6);
+      for (const entry of all) {
+        if (entry.kind === 'top_up') {
+          const cls = ({ PENDING: 'ev-pending', PROCESSING: 'ev-proc', PAID: 'ev-paid', FAILED: 'ev-failed' })[entry.t.status] || 'ev-info';
+          logLine(`top_up ${entry.t.id.slice(0,8)} settled as ${entry.t.status}`, cls, entry.when);
+        } else {
+          logLine(`fund_transfer ${entry.t.id.slice(0,8)} CREDITED  · +${fmtMoney(entry.t.amount_minor)} ${entry.t.currency}`, 'ev-bank', entry.when);
+        }
+      }
+    }
+
+    // Feed: merge top-ups and fund-transfers, newest first
+    const merged = [
+      ...data.recent_top_ups.map(t => ({ kind: 'top_up', when: t.created_at, data: t })),
+      ...data.recent_fund_transfers.map(f => ({ kind: 'fund_transfer', when: f.created_at, data: f })),
+    ].sort((a,b) => new Date(b.when) - new Date(a.when)).slice(0, 6);
+
+    if (merged.length === 0) {
+      $feed.innerHTML = '<div class="empty">No activity yet — trigger a top-up or bank transfer to begin.</div>';
       return;
     }
-    const recent = topUps.slice(0, 4);
-    $timelines.innerHTML = recent.map(renderTopUp).join('');
+    $feed.innerHTML = merged.map(e => e.kind === 'top_up' ? renderTopUp(e.data) : renderFundTransfer(e.data)).join('');
+  }
 
-    // Detect status transitions for log
-    for (const t of recent) {
-      const prev = inFlight.get(t.id);
-      if (!prev) {
-        inFlight.set(t.id, { startedAt: Date.parse(t.created_at), lastStatus: t.status });
-        continue;
-      }
-      if (prev.lastStatus !== t.status) {
-        const cls = ({ PENDING: 'ev-pending', PROCESSING: 'ev-proc', PAID: 'ev-paid', FAILED: 'ev-failed' })[t.status] || 'ev-info';
-        logLine(`top_up ${t.id.slice(0,8)} → ${t.status}`, cls);
-        prev.lastStatus = t.status;
-      }
-    }
+  // ── Milestone bar helpers ────────────────────────────────────────
+  function milestone(klass, position, labelText, labelPosition, timeText, timeAbove) {
+    const labelHtml = `<div class="ms-label ${labelPosition}">${labelText}</div>`;
+    const timeHtml = timeText
+      ? `<div class="ms-time ${timeAbove ? 'above' : 'below'}">${timeText}</div>`
+      : '';
+    return `<div class="ms ${klass}" style="left:${position}%">${labelHtml}${timeHtml}</div>`;
   }
 
   function renderTopUp(t) {
-    const startedAt = Date.parse(t.created_at);
-    const updatedAt = Date.parse(t.updated_at);
-    const now = Date.now();
-    const elapsed = Math.max(now - startedAt, updatedAt - startedAt);
-    const totalMs = Math.max(elapsed + 200, TIMELINE_WINDOW_MS / 2); // grow as needed
-    const x = (ms) => `${Math.min(98, Math.max(2, (ms / totalMs) * 100))}%`;
+    const startedAt = new Date(t.created_at).getTime();
+    const updatedAt = new Date(t.updated_at).getTime();
+    const isTerminal = t.status === 'PAID' || t.status === 'FAILED';
 
-    // Always show: request marker (t=0)
-    let markers = `
-      <div class="lane-label">timeline</div>
-      <div class="marker req" style="left: ${x(0)}">
-        <div class="tag">REQ</div>
-        <div class="ts">+0 ms</div>
-      </div>
-      <div class="marker pending" style="left: ${x(50)}">
-        <div class="tag">PENDING</div>
-      </div>
+    // Scale: if terminal, use actual duration. Otherwise, use rolling elapsed.
+    const elapsed = isTerminal ? (updatedAt - startedAt) : Math.max(50, Date.now() - startedAt);
+    const scale = Math.max(MIN_BAR_MS, Math.min(MAX_BAR_MS, elapsed * 1.05));
+
+    const x = (ms) => Math.max(2, Math.min(98, (ms / scale) * 100));
+
+    // Sync chunk: from 0 → ~PROCESSING moment (we don't know exactly; estimate ~10% of total
+    // duration, i.e. the time between PG return and settlement event).
+    const SYNC_MS_ESTIMATE = isTerminal ? Math.min(updatedAt - startedAt, 250) : 200;
+    const syncX = x(SYNC_MS_ESTIMATE);
+    const paidX = x(updatedAt - startedAt);
+
+    let segments = `
+      <div class="track"></div>
+      ${milestone('kind-req',  x(0),    'Request',          'above', '+0 ms', true)}
+      ${milestone('kind-sync', syncX,   '200 PROCESSING',   'below', `+${fmtMs(SYNC_MS_ESTIMATE)}`, false)}
     `;
-    // PROCESSING marker
-    if (['PROCESSING', 'PAID', 'FAILED'].includes(t.status)) {
-      const procT = updatedAt - startedAt; // approximate moment of first transition
-      markers += `<div class="marker proc" style="left: ${x(procT * 0.6)}"><div class="tag">PROCESSING</div></div>`;
-    }
-    // PAID marker
+
     if (t.status === 'PAID') {
-      const paidT = updatedAt - startedAt;
-      // gap band between PROC and PAID — the eventual-consistency story
-      const gapStart = (procStartFraction(paidT) + 0.6) / 2;
-      markers += `
-        <div class="gap-band" style="left: ${x(paidT * 0.62)}; width: ${Math.max(8, ((paidT * 0.36) / totalMs) * 100)}%;">
-          <div class="gap-label">async gap (~${(paidT/1000).toFixed(2)}s) — settlement in flight</div>
+      const gapWidth = paidX - syncX;
+      const gapDuration = (updatedAt - startedAt) - SYNC_MS_ESTIMATE;
+      segments += `
+        <div class="gap" style="left:${syncX}%; width:${gapWidth}%">
+          <div class="gap-text">async gap · ${fmtMs(gapDuration)}</div>
         </div>
-        <div class="marker paid" style="left: ${x(paidT * 0.98)}">
-          <div class="tag">PAID</div>
-          <div class="ts">+${paidT} ms</div>
-        </div>
+        ${milestone('kind-paid', paidX, 'PAID + credited', 'above', `+${fmtMs(updatedAt - startedAt)}`, false)}
       `;
-    }
-    if (t.status === 'FAILED') {
-      const ft = updatedAt - startedAt;
-      markers += `<div class="marker failed" style="left: ${x(ft * 0.95)}"><div class="tag">FAILED</div></div>`;
+    } else if (t.status === 'FAILED') {
+      segments += milestone('kind-failed', paidX, 'FAILED', 'above', `+${fmtMs(updatedAt - startedAt)}`, false);
+    } else {
+      // Still in flight — show a "waiting" hint after sync milestone
+      const tipX = Math.min(95, syncX + 30);
+      segments += `<div class="gap" style="left:${syncX}%; width:${tipX - syncX}%"><div class="gap-text">waiting on settlement…</div></div>`;
     }
 
     return `
-      <div class="topup">
-        <div class="topup-header">
-          <span class="topup-id">${t.id.slice(0,8)}…</span>
-          <span class="topup-amount">${fmtMoney(t.amount_minor)} ${t.currency}</span>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-kind">Top-up</span>
+          <span class="card-id">${t.id.slice(0,8)}</span>
+          <span class="card-amount">+${fmtMoney(t.amount_minor)} ${t.currency}</span>
           <span class="pill" data-status="${t.status}">${t.status}</span>
         </div>
-        <div class="timeline">${markers}</div>
+        <div class="bar">${segments}</div>
       </div>
     `;
   }
 
-  function procStartFraction() { return 0.05; }
+  function renderFundTransfer(f) {
+    // Fund-transfer doesn't have intermediate states; we just show "received from bank → credited".
+    // The wallet's created_at is when the consumer applied the credit, which is ~50ms after the
+    // bank notification arrived at omnibus. We don't know the exact "bank arrived" timestamp, so
+    // we draw a tight bar with two milestones for visual consistency.
+    const created = new Date(f.created_at).getTime();
+    return `
+      <div class="card fund">
+        <div class="card-header">
+          <span class="card-kind">Fund transfer</span>
+          <span class="card-id">${f.id.slice(0,8)}</span>
+          <span class="card-amount">+${fmtMoney(f.amount_minor)} ${f.currency}</span>
+          <span class="pill" data-status="PAID">PAID</span>
+        </div>
+        <div class="bar">
+          <div class="track"></div>
+          ${milestone('kind-bank', 4,  'Bank notify',     'above', new Date(created).toLocaleTimeString(), true)}
+          ${milestone('kind-paid', 96, 'PAID + credited', 'above', '', false)}
+          <div class="gap" style="left:4%; width:92%">
+            <div class="gap-text">omnibus → outbox → rabbitmq → wallet consumer  ·  ~50 ms</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
+  // ── Trigger handlers ─────────────────────────────────────────────
   async function triggerTopUp() {
-    if (!walletId) { logLine('demo wallet not yet loaded; please wait', 'ev-failed'); return; }
-    const amount = Math.max(1, Number($amount.value || 0));
+    if (!walletId) return;
+    const amount = Math.max(1, Number($topupAmount.value || 0));
     const idemKey = uuid();
-    $btn.disabled = true;
-    logLine(`POST /top-ups  · amount=${amount}  · idem=${idemKey.slice(0,8)}`, 'ev-info');
+    $topupBtn.disabled = true;
+    logLine(`POST /top-ups · amount=${amount} ${''}· idem=${idemKey.slice(0,8)}`, 'ev-info');
     try {
       const r = await fetch(`${GATEWAY}/top-ups`, {
         method: 'POST',
@@ -493,26 +605,55 @@
         body: JSON.stringify({ wallet_id: walletId, amount_minor: amount, currency: 'SAR' })
       });
       if (!r.ok) {
-        const body = await r.text();
-        logLine(`POST /top-ups → ${r.status}  ${body}`, 'ev-failed');
-        return;
+        logLine(`POST /top-ups → ${r.status}  ${await r.text()}`, 'ev-failed');
+      } else {
+        const data = await r.json();
+        logLine(`POST /top-ups → 200  · ${data.top_up_id.slice(0,8)} ${data.status}`, 'ev-pending');
+        knownStatus.set(data.top_up_id, data.status);
       }
-      const data = await r.json();
-      logLine(`POST /top-ups → 200  · top_up ${data.top_up_id.slice(0,8)} ${data.status}`, 'ev-pending');
-      inFlight.set(data.top_up_id, { startedAt: Date.now(), lastStatus: data.status });
     } catch (e) {
       logLine(`POST /top-ups errored: ${e.message}`, 'ev-failed');
     } finally {
-      setTimeout(() => { $btn.disabled = false; }, 250);
+      setTimeout(() => { $topupBtn.disabled = false; }, 250);
     }
   }
 
-  $btn.addEventListener('click', triggerTopUp);
+  async function triggerFundTransfer() {
+    if (!walletId) return;
+    const amount = Math.max(1, Number($fundAmount.value || 0));
+    const bankRef = `bank-${uuid().slice(0,12)}`;
+    $fundBtn.disabled = true;
+    logLine(`POST /bank-transfers · amount=${amount} · bank_ref=${bankRef}`, 'ev-info');
+    try {
+      const r = await fetch(`${GATEWAY}/bank-transfers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          virtual_iban: 'SA00 0000 0000 0000 0000 0000',
+          amount_minor: amount,
+          currency: 'SAR',
+          bank_reference: bankRef,
+          wallet_id: walletId,
+        })
+      });
+      if (!r.ok) {
+        logLine(`POST /bank-transfers → ${r.status}  ${await r.text()}`, 'ev-failed');
+      } else {
+        const data = await r.json();
+        logLine(`POST /bank-transfers → 200  · statement ${data.statement_id.slice(0,8)}`, 'ev-bank');
+      }
+    } catch (e) {
+      logLine(`POST /bank-transfers errored: ${e.message}`, 'ev-failed');
+    } finally {
+      setTimeout(() => { $fundBtn.disabled = false; }, 250);
+    }
+  }
 
-  // Initial load + polling
+  $topupBtn.addEventListener('click', triggerTopUp);
+  $fundBtn.addEventListener('click', triggerFundTransfer);
+
   loadWallet();
   setInterval(loadWallet, POLL_MS);
-
 })();
 </script>
 </body>
