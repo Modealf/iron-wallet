@@ -137,8 +137,86 @@
 
   .hint { font-size: 11px; color: var(--hint); }
 
+  /* Wallet picker */
+  .picker {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    align-items: stretch;
+  }
+  .picker select {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: #ffffff;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .picker button {
+    font: inherit;
+    font-weight: 600;
+    background: var(--panel);
+    color: var(--ink);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 0 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 120ms ease;
+  }
+  .picker button:hover { background: #f3efe9; }
+  .picker button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Right-panel header with refresh */
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .panel-head h2 { margin: 0; }
+  .panel-head .last-refresh {
+    font-size: 11px;
+    color: var(--hint);
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+  }
+  .panel-head button.refresh {
+    font: inherit;
+    font-weight: 600;
+    background: var(--ink);
+    color: #fff;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 120ms ease, transform 120ms ease;
+  }
+  .panel-head button.refresh:hover { background: #2a2a2a; }
+  .panel-head button.refresh:active { transform: translateY(1px); }
+  .panel-head button.refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+
   /* Activity feed */
-  .feed { display: flex; flex-direction: column; gap: 12px; }
+  .feed {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 540px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .feed::-webkit-scrollbar { width: 8px; }
+  .feed::-webkit-scrollbar-track { background: transparent; }
+  .feed::-webkit-scrollbar-thumb {
+    background: var(--line-soft);
+    border-radius: 4px;
+  }
   .card {
     border: 1.5px solid var(--line-soft);
     border-radius: 12px;
@@ -332,7 +410,11 @@
   <div class="grid">
 
     <div class="panel">
-      <h2>Demo Wallet</h2>
+      <h2>Wallet</h2>
+      <div class="picker">
+        <select id="walletPicker" aria-label="Active wallet"></select>
+        <button id="newWalletBtn" type="button" title="Create a fresh wallet">+ New</button>
+      </div>
       <div class="balance" id="balance">— <span class="currency">SAR</span></div>
       <div class="meta" id="walletMeta">loading…</div>
 
@@ -362,7 +444,11 @@
     </div>
 
     <div class="panel">
-      <h2>Recent activity</h2>
+      <div class="panel-head">
+        <h2>Recent activity</h2>
+        <span class="last-refresh" id="lastRefresh">never refreshed</span>
+        <button class="refresh" id="refreshBtn" type="button">Refresh</button>
+      </div>
       <div id="feed" class="feed"></div>
 
       <h2 style="margin-top: 22px;">Event log</h2>
@@ -375,7 +461,6 @@
 <script>
 (() => {
   const GATEWAY = `${location.protocol}//${location.hostname}:8081`;
-  const POLL_MS = 500;
   const MIN_BAR_MS = 1500;     // visual minimum; very fast settlements still take up reasonable space
   const MAX_BAR_MS = 6000;     // cap so very slow ones don't spread thin
 
@@ -384,7 +469,7 @@
   let logBuf = [];
   let knownStatus = new Map();   // top_up_id -> last seen status
   let knownFundIds = new Set();  // fund_transfer ids we've already logged
-  let firstLoad = true;
+  let firstLoadForWallet = true; // resets when switching wallets
 
   const $ = (id) => document.getElementById(id);
   const $balance = $('balance');
@@ -397,6 +482,10 @@
   const $fundAmount = $('fundAmount');
   const $healthDot = $('healthDot');
   const $healthLabel = $('healthLabel');
+  const $picker = $('walletPicker');
+  const $newWalletBtn = $('newWalletBtn');
+  const $refreshBtn = $('refreshBtn');
+  const $lastRefresh = $('lastRefresh');
 
   const pad = (n, w=2) => String(n).padStart(w, '0');
   const fmtTime = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(),3)}`;
@@ -418,25 +507,89 @@
   function setHealth(ok, msg=null) {
     if (ok) {
       $healthDot.classList.remove('bad');
-      $healthLabel.textContent = `polling gateway · ${POLL_MS}ms`;
+      $healthLabel.textContent = 'manual refresh · gateway reachable';
     } else {
       $healthDot.classList.add('bad');
       $healthLabel.textContent = `gateway unreachable${msg?` (${msg})`:''}`;
     }
   }
 
-  async function loadWallet() {
+  function shortId(id) { return id.slice(0,8); }
+
+  function fmtMoneyBalance(b, c) { return `${fmtMoney(b)} ${c}`; }
+
+  async function loadWalletList() {
     try {
-      const url = walletId ? `${GATEWAY}/wallets/${walletId}` : `${GATEWAY}/wallets/demo`;
-      const r = await fetch(url);
+      const r = await fetch(`${GATEWAY}/wallets`);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const data = await r.json();
-      walletId = data.id;
-      render(data);
-      setHealth(true);
-      firstLoad = false;
+      const list = await r.json();
+      // Sort: demo first, then most recent
+      list.sort((a, b) => {
+        if (a.is_demo !== b.is_demo) return a.is_demo ? -1 : 1;
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      const previousValue = $picker.value || walletId;
+      $picker.innerHTML = list.map(w => {
+        const label = w.is_demo
+          ? `Demo · ${fmtMoneyBalance(w.balance_minor, w.currency)}`
+          : `${shortId(w.id)} · ${fmtMoneyBalance(w.balance_minor, w.currency)}`;
+        return `<option value="${w.id}">${label}</option>`;
+      }).join('');
+      // Preserve current selection if still present, else default to first (demo)
+      if (previousValue && list.some(w => w.id === previousValue)) {
+        $picker.value = previousValue;
+      } else if (list.length > 0) {
+        $picker.value = list[0].id;
+      }
+      return list;
     } catch (e) {
       setHealth(false, e.message);
+      return [];
+    }
+  }
+
+  async function loadWallet() {
+    if (!walletId) return;
+    $refreshBtn.disabled = true;
+    try {
+      const r = await fetch(`${GATEWAY}/wallets/${walletId}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      render(data);
+      setHealth(true);
+      $lastRefresh.textContent = `refreshed ${fmtTime(new Date())}`;
+      firstLoadForWallet = false;
+    } catch (e) {
+      setHealth(false, e.message);
+    } finally {
+      $refreshBtn.disabled = false;
+    }
+  }
+
+  async function selectWallet(id) {
+    walletId = id;
+    prevBalance = null;
+    knownStatus = new Map();
+    knownFundIds = new Set();
+    firstLoadForWallet = true;
+    logLine(`switched to wallet ${shortId(id)}`, 'ev-info');
+    await loadWallet();
+  }
+
+  async function createNewWallet() {
+    $newWalletBtn.disabled = true;
+    try {
+      const r = await fetch(`${GATEWAY}/wallets`, { method: 'POST' });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      logLine(`created wallet ${shortId(data.id)}`, 'ev-info');
+      await loadWalletList();
+      $picker.value = data.id;
+      await selectWallet(data.id);
+    } catch (e) {
+      logLine(`create wallet errored: ${e.message}`, 'ev-failed');
+    } finally {
+      $newWalletBtn.disabled = false;
     }
   }
 
@@ -649,11 +802,30 @@
     }
   }
 
-  $topupBtn.addEventListener('click', triggerTopUp);
-  $fundBtn.addEventListener('click', triggerFundTransfer);
+  $topupBtn.addEventListener('click', async () => {
+    await triggerTopUp();
+    // One immediate fetch so the new card appears at PROCESSING.
+    // The user clicks Refresh again later to see PAID.
+    setTimeout(loadWallet, 80);
+  });
+  $fundBtn.addEventListener('click', async () => {
+    await triggerFundTransfer();
+    setTimeout(loadWallet, 80);
+  });
+  $refreshBtn.addEventListener('click', loadWallet);
+  $newWalletBtn.addEventListener('click', createNewWallet);
+  $picker.addEventListener('change', (e) => selectWallet(e.target.value));
 
-  loadWallet();
-  setInterval(loadWallet, POLL_MS);
+  // Initial load: get list, pick demo (or first), fetch its state.
+  (async () => {
+    const list = await loadWalletList();
+    if (list.length === 0) {
+      setHealth(false, 'no wallets returned');
+      return;
+    }
+    walletId = $picker.value;
+    await loadWallet();
+  })();
 })();
 </script>
 </body>
