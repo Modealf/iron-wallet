@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Generate three .excalidraw scene files for IronWallet docs:
+Generate four .excalidraw scene files for IronWallet docs (written to ./Excalidraw):
 
-  - architecture.excalidraw         (at-rest system architecture)
-  - fund-transfer-flow.excalidraw   (fund-transfer flow with numbered steps)
-  - top-up-state-machine.excalidraw (top_up row state machine)
+  - top-up-architecture.excalidraw   (top-up flow over the architecture)
+  - architecture.excalidraw          (at-rest system architecture)
+  - fund-transfer-flow.excalidraw    (fund-transfer flow with numbered steps)
+  - top-up-state-machine.excalidraw  (top_up row state machine)
 
-Uses the same visual language as top-up-architecture.excalidraw:
+Shared visual language:
   warm cream bg #f8f6f3, dark gray strokes #4a4a4a, soft service-card fills,
   hand-drawn roughness, system-ui body, monospace for code-like content.
 """
@@ -15,7 +16,9 @@ import json, random, time, os
 random.seed(2026)
 
 NOW = int(time.time() * 1000)
-OUT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+OUT_DIR = os.path.join(SCRIPT_DIR, "Excalidraw")
+os.makedirs(OUT_DIR, exist_ok=True)
 
 # ---------- color palette (from top-up brief) ----------
 TEAL    = "#9dd4c7"   # Investment-Wallet header
@@ -708,8 +711,205 @@ def build_state_machine():
 
 
 # ====================================================================
+# DIAGRAM 4 — Top-up architecture & flow
+# ====================================================================
+def build_top_up():
+    el = []
+    el.append(text(450, 30, "Top-Up — Architecture & Flow",
+                   size=28, family=1, w=600, h=36, align="center"))
+    el.append(text(330, 70,
+                   "services own their tables; numbered arrows trace one top-up request through the system",
+                   size=14, family=1, color=MUTED2, w=840, h=20, align="center"))
+
+    # ---------- Top row: synchronous request chain ----------
+    # Client (simple white box)
+    el.append(rect(40, 180, 120, 90, fill=WHITE))
+    el.append(text(40, 200, "Client", size=16, family=1, w=120, h=22, align="center"))
+    el.append(text(40, 226, "mobile / web app",
+                   size=12, family=1, color=MUTED2, w=120, h=18, align="center"))
+
+    # Gateway (small card)
+    card(el, 200, 160, 160, 130, "Gateway", WHITE,
+         name_size=16,
+         sections=[("FORWARDS", [
+             "POST /top-ups",
+             "POST /bank-transfers",
+         ])])
+
+    # Investment-Wallet (large teal-headed card)
+    card(el, 400, 110, 340, 320, "Investment-Wallet", TEAL,
+         sections=[
+             ("ENDPOINT", ["POST /top-ups"]),
+             ("TABLES", [
+                 "wallets, top_ups, fund_transfers",
+                 "idempotency_keys, processed_events",
+                 "outbox_events",
+             ]),
+             ("EVENTS", [
+                 "↓ consume settlement.completed",
+                 "↑ publish top_up.paid",
+             ]),
+         ])
+
+    # Payment-Gateway (medium blue-headed card)
+    card(el, 780, 150, 240, 240, "Payment-Gateway", BLUE,
+         sections=[
+             ("ENDPOINT", ["POST /charges"]),
+             ("TABLES", ["charges, idempotency_keys"]),
+             ("CALLS", [("external provider (Moyasar)", False)]),
+         ])
+
+    # Provider (mock) — small beige box, no header band
+    PR_X, PR_Y = 1080, 190
+    el.append(rect(PR_X, PR_Y, 220, 160, fill=BEIGE_L))
+    el.append(text(PR_X, PR_Y + 18, "Provider (mock)",
+                   size=16, family=1, w=220, h=22, align="center"))
+    el.append(text(PR_X, PR_Y + 58, "Moyasar",
+                   size=13, family=1, color=MUTED, w=220, h=18, align="center"))
+    el.append(text(PR_X, PR_Y + 82, "returns payment_id",
+                   size=13, family=1, color=MUTED, w=220, h=18, align="center"))
+    el.append(text(PR_X, PR_Y + 106, "fires signed webhook",
+                   size=13, family=1, color=MUTED, w=220, h=18, align="center"))
+
+    # ---------- Bottom row: async settlement loop ----------
+    # RabbitMQ
+    card(el, 540, 620, 260, 200, "RabbitMQ", BEIGE_D,
+         sections=[
+             ("TOPIC EXCHANGE", ["iron_wallet"]),
+             ("QUEUES", [
+                 "wallet.settlements",
+                 "wallet.settlements.dlq",
+             ]),
+         ])
+
+    # Omnibus (large gray-headed card with star)
+    OB_X, OB_Y, OB_W, OB_H = 900, 600, 340, 320
+    el.append(rect(OB_X, OB_Y, OB_W, OB_H, fill=WHITE))
+    el.append(rect(OB_X, OB_Y, OB_W, 44, fill=GRAY))
+    el.append(text(OB_X, OB_Y + 12, "Omnibus", size=18, family=1,
+                   w=OB_W, h=22, align="center"))
+    cy = OB_Y + 56
+    el.append(text(OB_X + 16, cy, "ENDPOINTS",
+                   size=10, family=1, color=MUTED, w=120, h=14))
+    el.append(text(OB_X + 16, cy + 18, "POST /webhooks/moyasar",
+                   size=12, family=3, w=260, h=16))
+    el.append(text(OB_X + 16, cy + 36, "POST /bank-transfers",
+                   size=12, family=3, w=260, h=16))
+    cy += 64
+    el.append(text(OB_X + 16, cy, "TABLES",
+                   size=10, family=1, color=MUTED, w=120, h=14))
+    el.append(text(OB_X + 16, cy + 18, "statements",
+                   size=12, family=3, w=100, h=16))
+    el.append(text(OB_X + 108, cy + 16, "★",
+                   size=16, family=1, color=GOLD, w=16, h=20))
+    el.append(text(OB_X + 130, cy + 18, "source of truth",
+                   size=12, family=1, color=MUTED2, w=180, h=16))
+    el.append(text(OB_X + 16, cy + 36, "processed_webhooks, outbox_events",
+                   size=12, family=3, w=300, h=16))
+    el.append(text(OB_X + 16, cy + 54, "idempotency_keys",
+                   size=12, family=3, w=200, h=16))
+    cy += 82
+    el.append(text(OB_X + 16, cy, "EVENTS",
+                   size=10, family=1, color=MUTED, w=120, h=14))
+    el.append(text(OB_X + 16, cy + 18, "↑ publish settlement.completed",
+                   size=12, family=3, w=300, h=16))
+
+    # ---------- Numbered arrows ----------
+    # 1. Client → Gateway
+    el.append(arrow([(160, 225), (200, 225)]))
+    numbered(el, 180, 207, 1)
+    # 2. Gateway → IW
+    el.append(arrow([(360, 225), (400, 225)]))
+    numbered(el, 380, 207, 2)
+    # 3. IW → PG
+    el.append(arrow([(740, 270), (780, 270)]))
+    numbered(el, 760, 252, 3)
+    # 4. PG → Provider
+    el.append(arrow([(1020, 270), (1080, 270)]))
+    numbered(el, 1050, 252, 4)
+    # 5. Provider → Omnibus (dashed, sweeps right then back in)
+    el.append(arrow(
+        [(1190, 350), (1330, 410), (1370, 490), (1300, 570), (1190, 600)],
+        dashed=True))
+    numbered(el, 1370, 480, 5)
+    # 6. Omnibus → RabbitMQ
+    el.append(arrow([(900, 720), (800, 720)]))
+    numbered(el, 850, 702, 6)
+    # 7. RabbitMQ → IW (dashed, sweeps left and up)
+    el.append(arrow(
+        [(620, 620), (440, 560), (380, 500), (440, 450), (500, 430)],
+        dashed=True))
+    numbered(el, 380, 525, 7)
+
+    # ---------- Flow steps panel ----------
+    FX, FY, FW, FH = 30, 940, 1020, 320
+    el.append(rect(FX, FY, FW, FH, fill=WHITE))
+    el.append(text(FX + 20, FY + 14, "Flow steps", size=18, family=1, w=200, h=24))
+
+    steps = [
+        "Client POSTs /top-ups with Idempotency-Key. Gateway just forwards.",
+        "Wallet claims the idempotency key and inserts a top_up row "
+        "(status PENDING) — both in one DB transaction.",
+        "Wallet calls Payment-Gateway. PG claims its own idem key (derived from "
+        "top_up_id), inserts a charge row (status CREATED).",
+        "PG forwards to the external provider (Moyasar mocked).",
+        "Provider returns payment_id immediately; schedules a signed webhook to "
+        "fire later. PG marks charge ACCEPTED and returns to Wallet, which "
+        "transitions top_up PENDING → PROCESSING and 200s the client.",
+        "Async: provider's signed webhook arrives at Omnibus. Omnibus verifies "
+        "HMAC, dedups by event_id, inserts a statement and an outbox_event in "
+        "one txn.",
+        "Omnibus's outbox publisher drains the row to RabbitMQ as "
+        "settlement.completed.",
+        "Wallet consumer reads the event, dedups by event_id, transitions "
+        "top_up PROCESSING → PAID, credits the wallet balance, and writes its "
+        "own outbox event top_up.paid.",
+    ]
+    cy = FY + 56
+    for i, s in enumerate(steps, 1):
+        numbered(el, FX + 36, cy, i)
+        words = s.split(" ")
+        line, lines = "", []
+        for w in words:
+            if not line:
+                line = w
+            elif len(line) + 1 + len(w) <= 105:
+                line += " " + w
+            else:
+                lines.append(line)
+                line = w
+        if line:
+            lines.append(line)
+        for j, ln in enumerate(lines):
+            el.append(text(FX + 64, cy - 10 + j * 20, ln,
+                           size=13, family=1, w=FW - 80, h=18))
+        cy += 22 * len(lines) + 8
+
+    # ---------- Arrow style legend (bottom right) ----------
+    LX, LY, LW, LH = 1080, 940, 390, 200
+    el.append(rect(LX, LY, LW, LH, fill=WHITE))
+    el.append(text(LX + 20, LY + 14, "Arrow style", size=18, family=1, w=200, h=24))
+    el.append(arrow([(LX + 30, LY + 64), (LX + 110, LY + 64)]))
+    el.append(text(LX + 130, LY + 54, "solid arrow",
+                   size=13, family=1, w=140, h=18))
+    el.append(text(LX + 130, LY + 74, "synchronous HTTP call",
+                   size=12, family=1, color=MUTED, w=240, h=18))
+    el.append(arrow([(LX + 30, LY + 114), (LX + 110, LY + 114)], dashed=True))
+    el.append(text(LX + 130, LY + 104, "dashed arrow",
+                   size=13, family=1, w=140, h=18))
+    el.append(text(LX + 130, LY + 124, "asynchronous (webhook / event)",
+                   size=12, family=1, color=MUTED, w=260, h=18))
+    el.append(text(LX + 20, LY + 160, "★", size=14, family=1, color=GOLD, w=16, h=18))
+    el.append(text(LX + 40, LY + 160, "source of truth (statements)",
+                   size=12, family=1, color=MUTED, w=300, h=18))
+
+    write_scene("top-up-architecture.excalidraw", el)
+
+
+# ====================================================================
 if __name__ == "__main__":
     print("Building diagrams in", OUT_DIR)
+    build_top_up()
     build_architecture()
     build_fund_transfer()
     build_state_machine()
