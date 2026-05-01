@@ -27,3 +27,11 @@ class WalletView(BaseModel):
     currency: str
     recent_top_ups: list[TopUpView]
     recent_fund_transfers: list[FundTransferView]
+
+
+class WalletSummary(BaseModel):
+    id: uuid.UUID
+    balance_minor: int
+    currency: str
+    created_at: datetime
+    is_demo: bool

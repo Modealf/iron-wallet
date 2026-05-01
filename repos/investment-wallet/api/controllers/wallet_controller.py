@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.session import session_dependency
 from resources.wallets import wallet_dal
-from resources.wallets.wallet_schema import WalletView, TopUpView, FundTransferView
+from resources.wallets.wallet_schema import WalletView, WalletSummary, TopUpView, FundTransferView
 from resources.top_ups.top_up_model import TopUp
 from resources.fund_transfers.fund_transfer_model import FundTransfer
 
@@ -32,6 +32,28 @@ async def _build_view(session: AsyncSession, wallet) -> WalletView:
         recent_top_ups=[TopUpView.model_validate(t, from_attributes=True) for t in top_ups],
         recent_fund_transfers=[FundTransferView.model_validate(f, from_attributes=True) for f in fund_transfers],
     )
+
+
+@router.get("", response_model=list[WalletSummary])
+async def list_wallets(session: AsyncSession = Depends(_session)) -> list[WalletSummary]:
+    await wallet_dal.get_or_create_demo(session)
+    rows = await wallet_dal.list_recent(session)
+    return [
+        WalletSummary(
+            id=w.id,
+            balance_minor=w.balance_minor,
+            currency=w.currency,
+            created_at=w.created_at,
+            is_demo=(w.id == wallet_dal.DEMO_WALLET_ID),
+        )
+        for w in rows
+    ]
+
+
+@router.post("", response_model=WalletView, status_code=201)
+async def create_wallet(session: AsyncSession = Depends(_session)) -> WalletView:
+    wallet = await wallet_dal.create_fresh(session)
+    return await _build_view(session, wallet)
 
 
 @router.get("/demo", response_model=WalletView)

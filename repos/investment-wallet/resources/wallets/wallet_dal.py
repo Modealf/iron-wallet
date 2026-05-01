@@ -23,3 +23,18 @@ async def get_or_create_demo(session: AsyncSession) -> Wallet:
     wallet = await session.scalar(select(Wallet).where(Wallet.id == DEMO_WALLET_ID))
     assert wallet is not None
     return wallet
+
+
+async def create_fresh(session: AsyncSession, *, currency: str = "SAR") -> Wallet:
+    wallet = Wallet(id=uuid.uuid4(), user_id=uuid.uuid4(), balance_minor=0, currency=currency)
+    session.add(wallet)
+    await session.flush()
+    await session.refresh(wallet)
+    return wallet
+
+
+async def list_recent(session: AsyncSession, limit: int = 50) -> list[Wallet]:
+    rows = await session.execute(
+        select(Wallet).order_by(Wallet.created_at.desc()).limit(limit)
+    )
+    return list(rows.scalars().all())
