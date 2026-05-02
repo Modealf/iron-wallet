@@ -351,9 +351,11 @@ No cross-service shared library (matches scaffold convention). Small duplication
 ## 16. Deliverables
 
 1. This design doc + Mermaid diagrams.
-2. Excalidraw architecture diagram (`.excalidraw` source + PNG export) committed under `docs/diagrams/`.
-3. Working POC reachable via `make up && make install` + one command per service; `examples/*.http` demonstrates flows end-to-end.
-4. Short `EDGE_CASES.md` + `FUTURE_WORK.md` stubs pulled from sections 13 and 17.
+2. Excalidraw diagrams (`.excalidraw` sources + PNG exports) under `docs/diagrams/` covering top-up architecture, fund-transfer flow, top-up state machine, and full system architecture.
+3. Working POC reachable via `make demo` (single docker-compose command brings up Cockroach, RabbitMQ, the four services, and the visualizer); manual flow via `make up && make install` + one command per service still supported.
+4. **Live pipeline visualizer** served on `http://localhost:8085` after `make demo`. Lets a reviewer trigger top-ups and bank transfers, switch between or create wallets, and refresh state on demand to see the eventual-consistency gap between the synchronous response and the async settlement event.
+5. `examples/top-up.sh` and `examples/fund-transfer.sh` exercise the same pipeline via curl.
+6. `EDGE_CASES.md` + `FUTURE_WORK.md` derived from sections 13 and 17.
 
 ## 17. Future work (deliberately out of scope)
 

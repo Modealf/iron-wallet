@@ -2,6 +2,19 @@
 
 ![Make it Rain](./dev_setup/img/make_it.jpg "Make it rain")
 
+## Submission
+
+After `make demo`:
+
+- **Live visualizer** → http://localhost:8085  — trigger top-ups and bank transfers, watch state settle through the async pipeline, pick or create wallets, refresh on demand.
+- **Design doc** → [`docs/superpowers/specs/`](docs/superpowers/specs/) — architecture, idempotency, state machines, outbox pattern.
+- **Diagrams** → [`docs/diagrams/`](docs/diagrams/) — Excalidraw sources + PNG/SVG exports.
+- **Edge cases / Future work** → [`docs/EDGE_CASES.md`](docs/EDGE_CASES.md), [`docs/FUTURE_WORK.md`](docs/FUTURE_WORK.md).
+- **Smoke scripts** → `./examples/top-up.sh`, `./examples/fund-transfer.sh`.
+
+Original brief below.
+
+---
 
 Design an investment wallet system for a company called `IronWallet` that incorporates a payment gateway and utilizes an omnibus account. How would you approach the architectural design to ensure seamless and secure user transactions?
 
@@ -100,18 +113,18 @@ poetry run poe api_service
 
 ## Quick demo (Docker)
 
-One command brings up Cockroach, RabbitMQ, and all 4 services:
+One command brings up Cockroach, RabbitMQ, all 4 services, and the visualizer:
 
     make demo
 
-When all containers are healthy, run the smoke scripts in another terminal:
+Then:
 
-    ./examples/top-up.sh
-    ./examples/fund-transfer.sh
+- Visualizer → http://localhost:8085
+- Smoke scripts → `./examples/top-up.sh`, `./examples/fund-transfer.sh`
 
-Tear down: `make down` (tears down both the demo stack and any infra started by `make up`).
+Tear down: `make down` (kills both the demo stack and any infra started by `make up`).
 
-Use the manual flow below ("Running the POC") if you want each service's logs in its own terminal.
+Use the manual flow below if you want each service's logs in its own terminal.
 
 ## Running the POC
 
