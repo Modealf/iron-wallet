@@ -420,7 +420,7 @@
 
       <div class="controls">
         <div class="group">
-          <span class="group-title">Top-up via card</span>
+          <span class="group-title">Top-up via Payment-Gateway</span>
           <span class="hint">client → gateway → wallet → payment-gateway → provider → settlement → wallet credits</span>
           <div class="row">
             <input id="topupAmount" type="number" min="1" step="100" value="5000" aria-label="Top-up amount in minor units" />
@@ -608,7 +608,7 @@
     $walletMeta.textContent = data.id;
 
     // Detect transitions for log (only after first load, so reload doesn't spam)
-    if (!firstLoad) {
+    if (!firstLoadForWallet) {
       for (const t of data.recent_top_ups) {
         const prev = knownStatus.get(t.id);
         if (prev !== t.status) {
